@@ -1,0 +1,6 @@
+[submodule "org.knime.scripting.editor/js-src/scripting-editor/knime-ui-extension-service"]
+	path = org.knime.scripting.editor/js-src/scripting-editor/knime-ui-extension-service
+	url = ../knime-ui-extension-service
+[submodule "org.knime.scripting.editor/js-src/scripting-editor/webapps-common"]
+	path = org.knime.scripting.editor/js-src/scripting-editor/webapps-common
+	url = ../webapps-common
