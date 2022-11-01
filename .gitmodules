@@ -1,3 +1,0 @@
-[submodule "org.knime.scripting.editor/js-src/scripting-editor/webapps-common"]
-	path = org.knime.scripting.editor/js-src/scripting-editor/webapps-common
-	url = ../webapps-common
