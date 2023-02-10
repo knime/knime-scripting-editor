@@ -13,7 +13,7 @@ properties([
 ])
 
 try {
-    node('maven && java11') {
+    node('maven && java17') {
         knimetools.defaultTychoBuild(updateSiteProject: 'org.knime.update.scripting.editor')
 
         // TODO(AP-19379) add sonarcloud analysis
