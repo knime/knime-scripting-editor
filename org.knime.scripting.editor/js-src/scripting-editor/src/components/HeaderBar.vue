@@ -59,6 +59,7 @@ export default defineComponent<ExecutionStatus>({ name: 'HeaderBar',
   flex-wrap: nowrap;
   justify-content: center;
 }
+
 .circle{
   margin-right: 10px;
   width: 15px;
@@ -67,6 +68,7 @@ export default defineComponent<ExecutionStatus>({ name: 'HeaderBar',
   border-radius: 50%;
   background-color: aqua;
 }
+
 .container{
   justify-content: space-between;
   height: var(--controls-height);
@@ -81,12 +83,15 @@ export default defineComponent<ExecutionStatus>({ name: 'HeaderBar',
 .idle{
   background-color: var(--knime-silver-sand);
 }
+
 .error{
   background-color: red;
 }
+
 .running{
   background-color: yellow;
 }
+
 .success{
   background-color: green;
 }

@@ -6,6 +6,8 @@ import FooterBar from './FooterBar.vue';
 
 import Splitter from './Splitter.vue';
 import LeftPane from './LeftPane.vue';
+import RightPane from './RightPane.vue';
+
 
 export default defineComponent({
     name: 'Layout',
@@ -13,12 +15,20 @@ export default defineComponent({
         LeftPane,
         HeaderBar,
         FooterBar,
+        RightPane,
         Splitter,
     },
+    inject: ['workspaceVariables'],
     data() {
         return {
             isExpanded: false,
+            emptyWorkspace: this.workspaceVariables.length,
         };
+    },
+    computed: {
+        isNew() {
+            return this.isExpanded || this.emptyWorkspace;
+        },
     },
 });
 </script>
@@ -43,15 +53,17 @@ export default defineComponent({
         </template>
       </LeftPane>
       <Splitter
-        id="1"
+        id="2"
         direction="row"
-        secondary-size="10%"
+        secondary-size="20%"
+        class="splitter"
       >
         <template #default>
           <Splitter
-            id="2"
+            id="1"
             direction="column"
-            secondary-size="40%"
+            secondary-size="20%"
+            class="splitter"
           >
             <template #default>
               <slot name="editor" />
@@ -62,9 +74,9 @@ export default defineComponent({
           </Splitter>
         </template>
         <template #secondary>
-          <div class="right-pane">
+          <RightPane class="right">
             <slot name="right-pane" />
-          </div>
+          </RightPane>
         </template>
       </Splitter>
     </div>
@@ -73,6 +85,18 @@ export default defineComponent({
 </template>
 
 <style lang="postcss" scoped>
+.slide{
+  display: flex;
+  flex: 1 0;
+  justify-items: flex-start;
+  justify-content: space-evenly;
+}
+
+.splitter{
+  &.row :deep(.secondary){
+    min-height: 100%;
+  }
+}
 
 .layout{
   --controls-height: 49px;

@@ -31,9 +31,15 @@ export default {
             default: '40%',
             validator: (str) => /^\d+[%\w]+$/.test(str),
         },
+        minWidth: {
+            type: Number,
+            default: 250,
+        },
     },
     data() {
         return {
+            indicateCollapse: false,
+            isCollapsed: false,
             isMove: false,
             currentSecondarySize: this.secondarySize,
         };
@@ -63,20 +69,32 @@ export default {
             return typeof localStorage !== 'undefined';
         },
         beginMove(e) {
+            this.indicateCollapse = false;
             this.$refs.handle.setPointerCapture(e.pointerId);
             this.isMove = true;
+            this.isCollapsed = false;
         },
         stopMove(e) {
             this.$refs.handle.releasePointerCapture(e.pointerId);
             this.isMove = false;
+            if (this.indicateCollapse) {
+                this.isCollapsed = true;
+            } else {
+                this.isCollapsed = false;
+            }
+            window.dispatchEvent(new Event('resize'));
         },
         move(e) {
+            const rect = this.$refs.secondary.getBoundingClientRect();
             if (this.isMove) {
-                const rect = this.$refs.secondary.getBoundingClientRect();
                 if (this.isColumn) {
                     this.currentSecondarySize = `${rect.height + (rect.y - e.clientY)}px`;
+                } else if (2 * (rect.width + (rect.x - e.clientX)) > this.minWidth) {
+                    this.indicateCollapse = false;
+                    this.currentSecondarySize = `${Math.max(rect.width + (rect.x - e.clientX), this.minWidth)}px`;
                 } else {
-                    this.currentSecondarySize = `${rect.width + (rect.x - e.clientX)}px`;
+                    this.indicateCollapse = true;
+                    this.currentSecondarySize = `${Math.max(rect.width + (rect.x - e.clientX), this.minWidth)}px`;
                 }
             }
         },
@@ -89,7 +107,10 @@ export default {
     :id="id"
     :class="['splitter', direction]"
   >
-    <div class="primary">
+    <div
+      ref="primary"
+      class="primary"
+    >
       <slot>Primary</slot>
     </div>
     <div
@@ -100,9 +121,13 @@ export default {
       @pointermove="move"
     />
     <div
+      v-show="!isCollapsed"
       ref="secondary"
       class="secondary"
-      :style="{ 'height': isColumn && currentSecondarySize, 'width': isRow && currentSecondarySize }"
+      :style="{
+        'height': isColumn && currentSecondarySize ,
+        'width': isRow && currentSecondarySize,
+      }"
     >
       <slot name="secondary">Secondary</slot>
     </div>
@@ -184,7 +209,7 @@ export default {
     }
 
     & .secondary {
-      min-width: 15%;
+      min-width: "200px";
     }
 
   }

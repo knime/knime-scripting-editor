@@ -13,3 +13,13 @@ You can find instructions on how to work with our code or develop extensions for
 ## Join the Community
 
 * [KNIME Forum](https://forum.knime.com/)
+
+## Missign dependency features
+
+### @knime/knime-ui-table
+
+1. On Click handler for each row in @knime/knime-ui-table ( insert Tables into UI )
+2. On Resize handler for @knime/knime-ui-table ( to adjust to splitter ) 
+
+### Splitter
+1. Breakpoint for collaps

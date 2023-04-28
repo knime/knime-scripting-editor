@@ -1,13 +1,13 @@
 <script lang="ts">
 import type { PropType } from 'vue';
 import { defineComponent } from 'vue';
-import TabBar from 'webapps-common/ui/components/TabBar.vue';
 
-export type TabOption = { value: string; label: string; title?: string; icon?: string; disabled?: boolean };
+import type { TabOption } from './TabPane.vue';
 
 export default defineComponent({
-    name: 'TabPane',
-    components: { TabBar },
+    name: 'RightPane',
+    components: {},
+    inject: ['workspaceVariables'],
     props: {
         name: {
             type: String,
@@ -27,26 +27,38 @@ export default defineComponent({
     data() {
         return {
             activeTab: this.initialTab,
+            isExpanded: false,
         };
+    },
+    computed: {
+        isWorkspaceEmpty() {
+            // @ts-ignore:next-line TODO: injection key
+            return this.workspaceVariables.length > 0;
+        },
+    },
+    watch: {
+        isWorkspaceEmpty: {
+            handler(newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    this.isExpanded = true;
+                }
+            },
+        },
     },
 });
 </script>
 
 <template>
-  <div class="tab-pane">
-    <TabBar
-      v-model:modelValue="activeTab"
-      :name="name"
-      :possible-values="tabs"
-    />
-
+  <div
+    v-if="isExpanded"
+    class="tab-pane"
+  >
     <slot :active-tab="activeTab" />
   </div>
 </template>
 
 <style lang="postcss" scoped>
+
 .tab-pane{
-    margin-left: 10px;
-    margin-right: 25px;
 }
 </style>

@@ -117,6 +117,12 @@ export class ScriptingServiceImpl<T extends NodeSettings> implements ScriptingSe
         this.eventHandlers[type] = handler;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected getEventHandler(type: string): any {
+        // eslint-disable-next-line
+        return this.eventHandlers[type];
+    }
+
     getFlowVariableInputs() {
         return this.sendToService('getFlowVariableInputs');
     }
