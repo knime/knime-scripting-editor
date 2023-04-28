@@ -45,7 +45,8 @@ export default defineComponent({
       <Splitter
         id="1"
         direction="row"
-        secondary-size="10%"
+        secondary-size="0%"
+        class="splitter-row"
       >
         <template #default>
           <Splitter
@@ -62,9 +63,7 @@ export default defineComponent({
           </Splitter>
         </template>
         <template #secondary>
-          <div class="right-pane">
-            <slot name="right-pane" />
-          </div>
+          <slot name="right-pane" />
         </template>
       </Splitter>
     </div>
@@ -89,7 +88,13 @@ export default defineComponent({
     display: flex;
     height: calc(100vh - 2*var(--controls-height));
     width: 100%;
+    
   }
+  .splitter-row:deep(.secondary){
+    min-width: 0%;
+    min-height: 100%;
+  }
+  
 }
 
 </style>

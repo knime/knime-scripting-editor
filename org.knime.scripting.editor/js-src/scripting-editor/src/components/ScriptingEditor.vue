@@ -190,9 +190,3 @@ export default defineComponent({
   </EditorLayout>
 </template>
 
-<style lang="postcss" scoped>
-
-.tab-pane{
-  flex: 1;
-}
-</style>

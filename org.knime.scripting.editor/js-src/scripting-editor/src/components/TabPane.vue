@@ -46,8 +46,7 @@ export default defineComponent({
 
 <style lang="postcss" scoped>
 .tab-pane{
-    overflow: hidden;
-    height: 100%;
-    flex: 1 2 200px;
+    margin-left: 10px;
+    margin-right: 25px;
 }
 </style>
