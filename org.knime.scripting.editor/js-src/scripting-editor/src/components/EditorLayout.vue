@@ -45,7 +45,7 @@ export default defineComponent({
       <Splitter
         id="1"
         direction="row"
-        secondary-size="0%"
+        secondary-size="10%"
         class="splitter-row"
       >
         <template #default>
