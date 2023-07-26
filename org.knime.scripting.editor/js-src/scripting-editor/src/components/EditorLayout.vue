@@ -1,5 +1,5 @@
 <script>
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 
 import HeaderBar from './HeaderBar.vue';
 import FooterBar from './FooterBar.vue';
@@ -7,18 +7,55 @@ import FooterBar from './FooterBar.vue';
 import Splitter from './Splitter.vue';
 import LeftPane from './LeftPane.vue';
 
+import { Splitpanes, Pane } from 'splitpanes';
+import 'splitpanes/dist/splitpanes.css';
+
 export default defineComponent({
     name: 'Layout',
     components: {
         LeftPane,
         HeaderBar,
         FooterBar,
-        Splitter,
+        Pane,
+        Splitpanes,
     },
     data() {
         return {
-            isExpanded: false,
+            paneSizes: {
+                left: 20,
+                right: 20,
+            },
+            previousPaneSizes: {
+                left: 20,
+                right: 20,
+            },
         };
+    },
+    computed: {
+        usedCenterPaneSize() {
+            return 100 - this.paneSizes.left - this.paneSizes.right;
+        },
+    },
+    methods: {
+        onSplitterClick(event) {
+            if (event.index === 1) {
+                this.collapsePane('left');
+            } else {
+                this.collapsePane('right');
+            }
+        },
+        collapsePane(pane) {
+            if (this.paneSizes[pane] === 0) {
+                this.paneSizes[pane] = this.previousPaneSizes[pane];
+            } else {
+                this.previousPaneSizes[pane] = this.paneSizes[pane];
+                this.paneSizes[pane] = 0;
+            }
+        },
+        onResize(event) {
+            this.paneSizes.left = event[0].size;
+            this.paneSizes.right = event[2].size;
+        },
     },
 });
 </script>
@@ -30,44 +67,48 @@ export default defineComponent({
         <slot name="buttons" />
       </template>
     </HeaderBar>
-    <div class="center">
-      <LeftPane
-        :expanded="isExpanded"
-        @toggle-expand="isExpanded = !isExpanded"
+    <splitpanes
+      class="default-theme"
+      @splitter-click="onSplitterClick"
+      @resize="onResize"
+    >
+      <pane
+        :size="paneSizes.left"
+        pane-id="left"
       >
-        <template #conda_env>
-          <slot name="conda_env" />
-        </template>
-        <template #inputs>
-          <slot name="inputs" />
-        </template>
-      </LeftPane>
-      <Splitter
-        id="1"
-        direction="row"
-        secondary-size="10%"
-      >
-        <template #default>
-          <Splitter
-            id="2"
-            direction="column"
-            secondary-size="40%"
+        <LeftPane>
+          <template #conda_env>
+            <slot name="conda_env" />
+          </template>
+          <template #inputs>
+            <slot name="inputs" />
+          </template>
+        </LeftPane>
+      </pane>
+      <pane :size="usedCenterPaneSize">
+        <splitpanes
+          horizontal
+        >
+          <pane size="70">
+            <slot name="editor" />
+          </pane>
+          <pane
+            size="30"
+            min-height="10"
           >
-            <template #default>
-              <slot name="editor" />
-            </template>
-            <template #secondary>
-              <slot name="bottom" />
-            </template>
-          </Splitter>
-        </template>
-        <template #secondary>
-          <div class="right-pane">
-            <slot name="right-pane" />
-          </div>
-        </template>
-      </Splitter>
-    </div>
+            <slot name="bottom" />
+          </pane>
+        </splitpanes>
+      </pane>
+      <pane
+        :size="paneSizes.right"
+        pane-id="rightPane"
+      >
+        <div class="right-pane">
+          <slot name="right-pane" />
+        </div>
+      </pane>
+    </splitpanes>
     <FooterBar />
   </div>
 </template>
@@ -84,12 +125,6 @@ export default defineComponent({
   width: 100%;
   background-color: var(--knime-gray-ultra-light);
   border-left: 1px solid var(--knime-silver-sand);
-
-  & .center{
-    display: flex;
-    height: calc(100vh - 2*var(--controls-height));
-    width: 100%;
-  }
 }
 
 </style>

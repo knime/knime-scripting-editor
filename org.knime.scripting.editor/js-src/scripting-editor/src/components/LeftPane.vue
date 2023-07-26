@@ -43,7 +43,6 @@ interface ComponentPublicInstance {
 export default defineComponent({
     name: 'LeftPane',
     components: {
-        LeftCollapsiblePanel,
         Button,
     },
     props: {
@@ -54,7 +53,6 @@ export default defineComponent({
     },
     data(props) {
         return {
-            isExpanded: false,
             activeTab: props.initialTab || null,
         };
     },
@@ -64,12 +62,10 @@ export default defineComponent({
                 { title: 'Input',
                     icon: CubeIcon,
                     isActive: this.isTabActive(TABS.INPUT),
-                    isExpanded: this.isExpanded,
                     onClick: () => this.clickItem(TABS.INPUT) },
                 { title: 'Conda Environment',
                     icon: PlusIcon,
                     isActive: this.isTabActive(TABS.CONDA),
-                    isExpanded: this.isExpanded,
                     onClick: () => this.clickItem(TABS.CONDA) },
             ];
         },
@@ -81,11 +77,9 @@ export default defineComponent({
         },
         clickItem(tabName) {
             const isAlreadyActive = this.isTabActive(tabName);
-            if (isAlreadyActive && this.isExpanded) {
-                this.isExpanded = false;
+            if (isAlreadyActive) {
                 this.activeTab = null;
             } else {
-                this.isExpanded = true;
                 this.activeTab = tabName;
             }
         },
@@ -94,38 +88,34 @@ export default defineComponent({
 </script>
 
 <template>
-  <nav class="nav-bar">
-    <ul>
-      <li
-        v-for="section in sidebarSections"
-        :key="section.title"
-        @click="section.onClick"
-      >
-        <Button
+  <div class="pane-layout">
+    <nav class="nav-bar">
+      <ul>
+        <li
+          v-for="section in sidebarSections"
           :key="section.title"
-          :title="section.title"
-          :class="{ active: section.isActive, expanded: section.isExpanded }"
+          @click="section.onClick"
         >
-          <Component
-            :is="section.icon"
-            class="icon"
-          />
-        </Button>
-      </li>
-    </ul>
-  </nav>
-  <LeftCollapsiblePanel
-    class="slide"
-    :expanded="isExpanded"
-    @toggle-expand="isExpanded = !isExpanded"
-  >
+          <Button
+            :key="section.title"
+            :title="section.title"
+            :class="{ active: section.isActive }"
+          >
+            <Component
+              :is="section.icon"
+              class="icon"
+            />
+          </Button>
+        </li>
+      </ul>
+    </nav>
     <div v-show="activeTab === 'conda_env'">
       <slot name="conda_env" />
     </div>
     <div v-show="activeTab === 'inputs'">
       <slot name="inputs" />
     </div>
-  </LeftCollapsiblePanel>
+  </div>
 </template>
 
 <style lang="postcss" scoped>
@@ -144,6 +134,12 @@ export default defineComponent({
   left: 0;
   min-height: 50px;
   min-width: 100%;
+}
+
+.pane-layout{
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 }
 
 .nav-bar{
@@ -166,10 +162,6 @@ export default defineComponent({
 
       &.active {
         background-color: var(--knime-porcelain);
-
-        &.expanded {
-          background-color: var(--knime-gray-ultra-light);
-        }
       }
 
       &:hover {
