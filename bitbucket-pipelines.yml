@@ -11,7 +11,7 @@ definitions:
     sonar: ~/.sonar/cache
   steps:
     - step: &lint-test-build
-        name: Lint and tests
+        name: Lint, tests and build
         caches:
           - node
           - sonar
@@ -43,7 +43,7 @@ pipelines:
           name: "publish patch version to npm"
           trigger: manual
           deployment: production
-          # size: 2x # this should not be needed
+          size: 2x # TODO figure out how to reduce this back to 1, if possible, needed because of global docker memory assignment
           script:
             - cd org.knime.scripting.editor.js
             - npm version patch --no-git-tag-version
