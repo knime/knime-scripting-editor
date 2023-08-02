@@ -13,10 +13,11 @@ properties([
 ])
 
 try {
-    node('maven && java17') {
-        knimetools.defaultTychoBuild(updateSiteProject: 'org.knime.update.scripting.editor')
+    knimetools.defaultTychoBuild('org.knime.update.scripting.editor')
 
-        // TODO(AP-19379) add sonarcloud analysis
+    stage('Sonarqube analysis') {
+        env.lastStage = env.STAGE_NAME
+        workflowTests.runSonar()
     }
 } catch (ex) {
     currentBuild.result = 'FAILURE'
