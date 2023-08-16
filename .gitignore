@@ -9,6 +9,7 @@
 **/CHANGELOG.md
 **/.idea
 **/.vscode
+**/.DS_Store
 
 # new build output
 */.polyglot.*
