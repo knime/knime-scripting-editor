@@ -11,13 +11,13 @@ import {
 } from "vscode-languageclient";
 import { AbstractMessageReader, AbstractMessageWriter } from "vscode-jsonrpc";
 import { getScriptingService } from "./scripting-service";
-import { languages, Uri } from "monaco-editor";
-import {
-  RegisteredFileSystemProvider,
-  registerFileSystemOverlay,
-  RegisteredMemoryFile,
-} from "vscode/service-override/files";
-import * as vscode from "vscode";
+import { Uri } from "monaco-editor";
+// import {
+//   RegisteredFileSystemProvider,
+//   registerFileSystemOverlay,
+//   RegisteredMemoryFile,
+// } from "vscode/service-override/files";
+// import * as vscode from "vscode";
 
 class KnimeMessageReader
   extends AbstractMessageReader
@@ -88,30 +88,30 @@ export const initLanguageServices = async () => {
 
   await initServices({
     enableModelService: true,
-    enableThemeService: true,
-    enableTextmateService: true,
-    configureConfigurationService: {
-      defaultWorkspaceUri: "/tmp",
-    },
+    // enableThemeService: true,
+    // enableTextmateService: true,
+    // configureConfigurationService: {
+    //   defaultWorkspaceUri: "/tmp",
+    // },
     enableKeybindingsService: true,
     debugLogging: true,
   });
 
-  languages.register({
-    id: "python",
-    extensions: [".py"],
-    aliases: ["PYTHON", "Python", "python"],
-    mimetypes: ["text/x-python"],
-  });
+  // languages.register({
+  //   id: "python",
+  //   extensions: [".py"],
+  //   aliases: ["PYTHON", "Python", "python"],
+  //   mimetypes: ["text/x-python"],
+  // });
 
-  const fileSystemProvider = new RegisteredFileSystemProvider(false);
-  fileSystemProvider.registerFile(
-    new RegisteredMemoryFile(
-      vscode.Uri.file("/tmp/main.py"),
-      'print("Hello, World!")',
-    ),
-  );
-  registerFileSystemOverlay(1, fileSystemProvider);
+  // const fileSystemProvider = new RegisteredFileSystemProvider(false);
+  // fileSystemProvider.registerFile(
+  //   new RegisteredMemoryFile(
+  //     vscode.Uri.file("/tmp/main.py"),
+  //     'print("Hello, World!")',
+  //   ),
+  // );
+  // registerFileSystemOverlay(1, fileSystemProvider);
 };
 
 export const startKnimeLanguageClient = async (
@@ -130,11 +130,11 @@ export const startKnimeLanguageClient = async (
         error: () => ({ action: ErrorAction.Continue }),
         closed: () => ({ action: CloseAction.Restart }),
       },
-      workspaceFolder: {
-        index: 0,
-        name: "workspace",
-        uri: Uri.parse("/tmp"),
-      },
+      // workspaceFolder: {
+      //   index: 0,
+      //   name: "workspace",
+      //   uri: Uri.parse("/tmp"),
+      // },
     },
     // create a language client connection from the JSON RPC connection on demand
     connectionProvider: {

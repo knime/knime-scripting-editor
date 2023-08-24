@@ -21,7 +21,11 @@
  */
 
 import { onMounted, onUnmounted, ref } from "vue";
-import * as monaco from "monaco-editor";
+import {
+  editor,
+  languages,
+  Uri,
+} from "monaco-editor/esm/vs/editor/editor.api.js";
 import { getScriptingService } from "@/scripting-service";
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 import { startKnimeLanguageClient, initLanguageServices } from "../knime-lsp";
@@ -32,7 +36,7 @@ const emit = defineEmits(["monaco-created"]);
 const props = defineProps({
   language: {
     type: String,
-    default: null,
+    default: "plaintext",
   },
   fileName: {
     type: String,
@@ -41,8 +45,7 @@ const props = defineProps({
 });
 
 // Remember the model and editor so that we can dispose them when the component is unmounted
-let editorModel: monaco.editor.ITextModel,
-  editor: monaco.editor.IStandaloneCodeEditor;
+let editorModel: editor.ITextModel, editorObj: editor.IStandaloneCodeEditor;
 
 const editorRef = ref(null);
 
@@ -53,33 +56,49 @@ onMounted(async () => {
     );
   }
 
-  debugger;
-
   await initLanguageServices();
 
   const initialScript = (await getScriptingService().getInitialSettings())
     .script;
 
-  // TODO with this method the model does not know that it is a Python file
+  // NB: The path is not real but just in memory
   const modelRef = await createModelReference(
-    monaco.Uri.parse(`/tmp/${props.fileName}`)
+    Uri.parse(`/script/${props.fileName}`),
+    initialScript,
   );
-  modelRef.object.setLanguageId("python");
+  modelRef.object.setLanguageId(props.language);
 
   // TODO null check here?
   editorModel = modelRef.object.textEditorModel!;
 
+  // editor.defineTheme("myCustomTheme", {
+  //   base: "vs", // can also be vs-dark or hc-black
+  //   inherit: true, // can also be false to completely replace the builtin rules
+  //   rules: [
+  //     {
+  //       token: "comment",
+  //       foreground: "ffa500",
+  //       fontStyle: "italic underline",
+  //     },
+  //     { token: "comment.js", foreground: "008800", fontStyle: "bold" },
+  //     { token: "comment.css", foreground: "0000ff" }, // will inherit fontStyle from `comment` above
+  //   ],
+  //   colors: {
+  //     "editor.foreground": "#000000",
+  //   },
+  // });
+  // editor.setTheme("myCustomTheme");
+
   // TODO null check here?
-  const workingModel = monaco.editor.createModel(
-    initialScript,
-    "python",
-    monaco.Uri.parse(`/tmp/${props.fileName}`),
-  );
-  console.log("Working model", workingModel);
-  console.log("New model", editorModel);
+  // const workingModel = monaco.editor.createModel(
+  //   initialScript,
+  //   "python",
+  //   monaco.Uri.parse(`/tmp/${props.fileName}`),
+  // );
+  // console.log("Working model", workingModel);
+  // console.log("New model", editorModel);
 
-
-  editor = createConfiguredEditor(editorRef.value as HTMLElement, {
+  editorObj = createConfiguredEditor(editorRef.value as HTMLElement, {
     model: editorModel,
     glyphMargin: false,
     lightbulb: {
@@ -99,11 +118,12 @@ onMounted(async () => {
 
 onUnmounted(() => {
   console.log("Unmounting CodeEditor");
+  // TODO dispose the model reference
   if (typeof editorModel !== "undefined") {
     editorModel.dispose();
   }
   if (typeof editor !== "undefined") {
-    editor.dispose();
+    editorObj.dispose();
   }
 });
 </script>
