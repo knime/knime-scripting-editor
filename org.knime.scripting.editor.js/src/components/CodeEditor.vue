@@ -25,6 +25,7 @@ import * as monaco from "monaco-editor";
 import { getScriptingService } from "@/scripting-service";
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 import { startKnimeLanguageClient, initLanguageServices } from "../knime-lsp";
+import "monaco-editor/esm/vs/basic-languages/python/python.contribution";
 
 const emit = defineEmits(["monaco-created"]);
 
