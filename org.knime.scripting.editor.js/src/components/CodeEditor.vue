@@ -21,14 +21,17 @@
  */
 
 import { onMounted, onUnmounted, ref } from "vue";
-import {
-  editor,
-  languages,
-  Uri,
-} from "monaco-editor/esm/vs/editor/editor.api.js";
+import { editor, Uri } from "monaco-editor";
 import { getScriptingService } from "@/scripting-service";
-import { createConfiguredEditor, createModelReference } from "vscode/monaco";
+import {
+  createConfiguredEditor,
+  createModelReference,
+  type IReference,
+  type ITextFileEditorModel,
+} from "vscode/monaco";
 import { startKnimeLanguageClient, initLanguageServices } from "../knime-lsp";
+
+// TODO move somewhere else
 import "monaco-editor/esm/vs/basic-languages/python/python.contribution";
 
 const emit = defineEmits(["monaco-created"]);
@@ -45,7 +48,8 @@ const props = defineProps({
 });
 
 // Remember the model and editor so that we can dispose them when the component is unmounted
-let editorModel: editor.ITextModel, editorObj: editor.IStandaloneCodeEditor;
+let editorModel: IReference<ITextFileEditorModel>,
+  editorObj: editor.IStandaloneCodeEditor;
 
 const editorRef = ref(null);
 
@@ -62,44 +66,16 @@ onMounted(async () => {
     .script;
 
   // NB: The path is not real but just in memory
-  const modelRef = await createModelReference(
+  editorModel = await createModelReference(
     Uri.parse(`/script/${props.fileName}`),
     initialScript,
   );
-  modelRef.object.setLanguageId(props.language);
+  editorModel.object.setLanguageId(props.language);
 
   // TODO null check here?
-  editorModel = modelRef.object.textEditorModel!;
-
-  // editor.defineTheme("myCustomTheme", {
-  //   base: "vs", // can also be vs-dark or hc-black
-  //   inherit: true, // can also be false to completely replace the builtin rules
-  //   rules: [
-  //     {
-  //       token: "comment",
-  //       foreground: "ffa500",
-  //       fontStyle: "italic underline",
-  //     },
-  //     { token: "comment.js", foreground: "008800", fontStyle: "bold" },
-  //     { token: "comment.css", foreground: "0000ff" }, // will inherit fontStyle from `comment` above
-  //   ],
-  //   colors: {
-  //     "editor.foreground": "#000000",
-  //   },
-  // });
-  // editor.setTheme("myCustomTheme");
-
-  // TODO null check here?
-  // const workingModel = monaco.editor.createModel(
-  //   initialScript,
-  //   "python",
-  //   monaco.Uri.parse(`/tmp/${props.fileName}`),
-  // );
-  // console.log("Working model", workingModel);
-  // console.log("New model", editorModel);
-
+  // editorModel = modelRef.object.textEditorModel!;
   editorObj = createConfiguredEditor(editorRef.value as HTMLElement, {
-    model: editorModel,
+    model: editorModel.object.textEditorModel,
     glyphMargin: false,
     lightbulb: {
       enabled: true,
