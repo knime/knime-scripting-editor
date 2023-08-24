@@ -1,6 +1,7 @@
 // eslint-disable-next-line spaced-comment
 /// <reference types="vitest" />
 import { fileURLToPath, URL } from "node:url";
+import { readFileSync } from "fs";
 
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
@@ -37,6 +38,30 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["vue", "monaco-editor"],
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      plugins: [
+        // copied from "https://github.com/CodinGame/monaco-vscode-api/blob/run-ext-host-in-worker/demo/vite.config.ts"
+        {
+          name: "import.meta.url",
+          setup({ onLoad }) {
+            // Help vite that bundles/move files without touching `import.meta.url` which breaks asset urls
+            onLoad(
+              { filter: /default-extensions\/.*\.js/, namespace: "file" },
+              (args) => {
+                let code = readFileSync(args.path, "utf8");
+                code = code.replace(
+                  /\bimport\.meta\.url\b/g,
+                  `new URL('/@fs/${args.path}', window.location.origin)`,
+                );
+                return { contents: code };
+              },
+            );
+          },
+        },
+      ],
     },
   },
   test: {

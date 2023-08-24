@@ -23,6 +23,8 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import * as monaco from "monaco-editor";
 import { getScriptingService } from "@/scripting-service";
+import { createConfiguredEditor, createModelReference } from "vscode/monaco";
+import { startKnimeLanguageClient, initLanguageServices } from "../knime-lsp";
 
 const emit = defineEmits(["monaco-created"]);
 
@@ -50,16 +52,33 @@ onMounted(async () => {
     );
   }
 
+  debugger;
+
+  await initLanguageServices();
+
   const initialScript = (await getScriptingService().getInitialSettings())
     .script;
 
-  editorModel = monaco.editor.createModel(
-    initialScript,
-    props.language,
-    monaco.Uri.parse(`inmemory://${props.fileName}`),
+  // TODO with this method the model does not know that it is a Python file
+  const modelRef = await createModelReference(
+    monaco.Uri.parse(`/tmp/${props.fileName}`)
   );
+  modelRef.object.setLanguageId("python");
 
-  editor = monaco.editor.create(editorRef.value as HTMLElement, {
+  // TODO null check here?
+  editorModel = modelRef.object.textEditorModel!;
+
+  // TODO null check here?
+  const workingModel = monaco.editor.createModel(
+    initialScript,
+    "python",
+    monaco.Uri.parse(`/tmp/${props.fileName}`),
+  );
+  console.log("Working model", workingModel);
+  console.log("New model", editorModel);
+
+
+  editor = createConfiguredEditor(editorRef.value as HTMLElement, {
     model: editorModel,
     glyphMargin: false,
     lightbulb: {
@@ -71,11 +90,14 @@ onMounted(async () => {
     fixedOverflowWidgets: true,
   });
 
+  await startKnimeLanguageClient("Python LSP", ["python"]);
+
   // Notify the parent that the editor is now available
   emit("monaco-created", { editor, editorModel });
 });
 
 onUnmounted(() => {
+  console.log("Unmounting CodeEditor");
   if (typeof editorModel !== "undefined") {
     editorModel.dispose();
   }
