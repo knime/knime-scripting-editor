@@ -37,14 +37,8 @@ export default defineConfig({
       formats: ["es"],
     },
     rollupOptions: {
+      external: ["vue", "monaco-editor"],
       // external: ["vue", "monaco-editor", "monaco-languageclient", "vscode-languageclient", "vscode-jsonrpc"],
-      external: [
-        "vue",
-        "monaco-editor",
-        "monaco-languageclient",
-        "vscode-languageclient",
-        "vscode-jsonrpc",
-      ],
     },
   },
   optimizeDeps: {
