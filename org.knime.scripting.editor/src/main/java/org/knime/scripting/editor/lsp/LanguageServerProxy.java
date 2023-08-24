@@ -111,7 +111,7 @@ public final class LanguageServerProxy implements AutoCloseable {
      */
     public synchronized void sendMessage(final String message) {
         // Send the message
-        LOGGER.debug("Sending to LS server: '" + message + "'");
+        LOGGER.warn("Sending to LS server: '" + message + "'");
 
         try {
             // TODO(AP-19338) Content-Length should be num bytes but we set it to num chars
@@ -140,7 +140,7 @@ public final class LanguageServerProxy implements AutoCloseable {
         while (true) { // NOSONAR: Never end  TODO
             try {
                 line = m_stdoutReader.readLine();
-                LOGGER.debug("Line from LS: '" + line + "'");
+                LOGGER.warn("Line from LS: '" + line + "'");
                 if (line.isBlank()) {
                     // Blank line before the content: Read the content
                     final char[] buffer = new char[nextContentLength];
@@ -150,7 +150,7 @@ public final class LanguageServerProxy implements AutoCloseable {
                         read += m_stdoutReader.read(buffer, read, nextContentLength - read);
                     }
                     final String message = new String(buffer);
-                    LOGGER.debug("Sending to LS client: " + message);
+                    LOGGER.warn("Sending to LS client: " + message);
                     notifyMessageListener(message);
                 } else {
                     if (!line.startsWith("Content")) {
