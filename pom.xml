@@ -23,6 +23,7 @@
 
 	<modules>
 		<module>org.knime.scripting.editor</module>
+		<module>org.knime.scripting.editor.tests</module>
 		<module>org.knime.features.scripting.editor</module>
 		<module>org.knime.update.scripting.editor</module>
 	</modules>
