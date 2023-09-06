@@ -49,6 +49,8 @@ pipelines:
             - npm version patch --no-git-tag-version
             - version=`node -p "require('./package.json').version"`
             - git add package.json package-lock.json
+            - rm .husky/post-commit
+            - rm .husky/pre-push
             - HUSKY=0 git commit -m "Bump version to ${version} [skip ci]"
             - git tag "v${version}" -am "Bump version to ${version}"
             - HUSKY=0 git push && git push --tags
