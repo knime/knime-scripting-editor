@@ -48,13 +48,13 @@ pipelines:
             - cd org.knime.scripting.editor.js
             - npm version patch --no-git-tag-version
             - version=`node -p "require('./package.json').version"`
-            - git add -A
-            - git commit -m "Bump version to ${version} [skip ci]"
+            - git add package.json package-lock.json
+            - HUSKY=0 git commit -m "Bump version to ${version} [skip ci]"
             - git tag "v${version}" -am "Bump version to ${version}"
-            - git push && git push --tags
+            - HUSKY=0 git push && git push --tags
             - pipe: atlassian/npm-publish:0.2.0
               variables:
                 NPM_TOKEN: $NPM_TOKEN
   branches:
-    '{master,releases/*}':
+    "{master,releases/*}":
       - step: *lint-test-build
