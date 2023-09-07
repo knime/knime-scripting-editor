@@ -63,11 +63,15 @@ onMounted(() => {
 onUnmounted(() => {
   term?.dispose();
 });
+
+const reset = () => {
+  term.reset()
+}
 </script>
 
 <template>
   <div ref="termRef" class="terminal" />
-  <Button class="clear-button" compact @click="term.reset()">clear </Button>
+  <Button class="clear-button" compact @click="reset">clear </Button>
 </template>
 
 <style lang="postcss">

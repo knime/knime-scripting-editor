@@ -23,6 +23,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import * as monaco from "monaco-editor";
 import { getScriptingService } from "@/scripting-service";
+import EChartTypes from "echarts/types/dist/echarts.d.ts?raw";
 
 const emit = defineEmits(["monaco-created"]);
 
@@ -52,16 +53,68 @@ onMounted(async () => {
 
   const initialScript = (await getScriptingService().getInitialSettings())
     .script;
+    monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: false,
+    })
+
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.ES2016,
+      allowNonTsExtensions: true,
+      allowJs: true,
+      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+      module: monaco.languages.typescript.ModuleKind.ESNext
+    })
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(EChartTypes, "");
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+        `import * as echarts from './echarts';
+        // Export for UMD module.
+        export as namespace echarts
+        export = echarts;`,
+        // https://github.com/microsoft/monaco-editor/issues/667#issuecomment-468164794
+        "file:///node_modules/@types/echarts/index.d.ts"
+    );
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            `import * as echarts from 'echarts';
+        // Declare to global namespace.
+        declare global {
+            const ROOT_PATH: string
+            const $: any
+            const app: {
+                configParameters: {
+                    [key: string]: {
+                        options: Record<string, string> | string[]
+                    } | {
+                        min?: number
+                        max?: number
+                    }
+                },
+                config: {
+                    onChange: () => void
+                    [key: string]: string | number | Function
+                },
+                onresize: () => void,
+                [key: string]: any
+            };
+            const ecStat: any;
+            const d3: any;
+            const myChart: echarts.ECharts
+            let option: echarts.EChartsOption
+            const echarts: typeof echarts
+        }`,
+            "file:///example.d.ts"
+        );
   editorModel = monaco.editor.createModel(
     initialScript,
-    props.language,
+    "typescript",
     monaco.Uri.parse(`inmemory://${props.fileName}`),
   );
 
   editor = monaco.editor.create(editorRef.value as HTMLElement, {
-    model: editorModel,
     glyphMargin: false,
+    language: "javascript",
     lightbulb: {
       enabled: true,
     },
