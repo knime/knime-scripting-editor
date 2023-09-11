@@ -104,5 +104,25 @@
 			<layout>p2</layout>
 			<url>${knime.gateway.p2}</url>
 		</repository>
+		<repository>
+			<id>p2-knime-ai</id>
+			<layout>p2</layout>
+			<url>${knime.ai.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-ui</id>
+			<layout>p2</layout>
+			<url>${knime.ui.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-cef</id>
+			<layout>p2</layout>
+			<url>${knime.cef.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-product</id>
+			<layout>p2</layout>
+			<url>${knime.product.p2}</url>
+		</repository>
 	</repositories>
 </project>
