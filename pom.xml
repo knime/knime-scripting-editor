@@ -23,6 +23,7 @@
 
 	<modules>
 		<module>org.knime.scripting.editor</module>
+		<module>org.knime.scripting.editor.ai</module>
 		<module>org.knime.scripting.editor.tests</module>
 		<module>org.knime.features.scripting.editor</module>
 		<module>org.knime.update.scripting.editor</module>
@@ -35,6 +36,11 @@
 			<url>${knime.core.p2}</url>
 		</repository>
 		<repository>
+			<id>p2-knime-core-ui</id>
+			<layout>p2</layout>
+			<url>${knime.core.ui.p2}</url>
+		</repository>
+		<repository>
 			<id>p2-knime-shared</id>
 			<layout>p2</layout>
 			<url>${knime.shared.p2}</url>
@@ -43,86 +49,6 @@
 			<id>p2-knime-tp</id>
 			<layout>p2</layout>
 			<url>${knime.tp.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-workbench</id>
-			<layout>p2</layout>
-			<url>${knime.workbench.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-server-api</id>
-			<layout>p2</layout>
-			<url>${knime.server.api.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-com-shared</id>
-			<layout>p2</layout>
-			<url>${knime.com.shared.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-server-client</id>
-			<layout>p2</layout>
-			<url>${knime.server.client.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-core-ui</id>
-			<layout>p2</layout>
-			<url>${knime.core.ui.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-json</id>
-			<layout>p2</layout>
-			<url>${knime.json.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-base</id>
-			<layout>p2</layout>
-			<url>${knime.base.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-js-base</id>
-			<layout>p2</layout>
-			<url>${knime.js.base.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-js-core</id>
-			<layout>p2</layout>
-			<url>${knime.js.core.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-svg</id>
-			<layout>p2</layout>
-			<url>${knime.svg.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-javasnippet</id>
-			<layout>p2</layout>
-			<url>${knime.javasnippet.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-gateway</id>
-			<layout>p2</layout>
-			<url>${knime.gateway.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-ai</id>
-			<layout>p2</layout>
-			<url>${knime.ai.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-ui</id>
-			<layout>p2</layout>
-			<url>${knime.ui.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-cef</id>
-			<layout>p2</layout>
-			<url>${knime.cef.p2}</url>
-		</repository>
-		<repository>
-			<id>p2-knime-product</id>
-			<layout>p2</layout>
-			<url>${knime.product.p2}</url>
 		</repository>
 	</repositories>
 </project>
