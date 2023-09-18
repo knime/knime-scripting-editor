@@ -59,13 +59,13 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
 
 /**
- * The {@link HubConnection} is a singleton that uses the (last) registered {@link HubEndpoint} of the
- * extension point with the same name. It shall provide access to the KNIME Hub that is currently selected
- * in the AP to be used for AI assistance.
+ * The {@link HubConnection} is a singleton that uses the (last) registered {@link HubEndpoint} of the extension point
+ * with the same name. It shall provide access to the KNIME Hub that is currently selected in the AP to be used for AI
+ * assistance.
  *
  * @author Carsten Haubold, KNIME GmbH, Konstanz, Germany
  */
-public final class HubConnection implements HubEndpoint {
+public final class HubConnection implements HubEndpoint { // NOSONAR: singleton to only parse the extension point once
     private static final String EXTENSION_POINT = "org.knime.scripting.editor.ai.HubEndpoint";
 
     private static final String HUB_ENDPOINT = "HubEndpoint";
@@ -75,7 +75,7 @@ public final class HubConnection implements HubEndpoint {
     private final HubEndpoint m_hubEndpoint;
 
     /** The one and only instance of the HubConnection */
-    public static HubConnection INSTANCE = new HubConnection();
+    public static final HubConnection INSTANCE = new HubConnection();
 
     private HubConnection() {
         IExtensionRegistry registry = Platform.getExtensionRegistry();
@@ -87,8 +87,8 @@ public final class HubConnection implements HubEndpoint {
                     try {
                         hubEndpoint = (HubEndpoint)element.createExecutableExtension(HUB_ENDPOINT_CLASS);
                     } catch (CoreException ex) {
-                        NodeLogger.getLogger(getClass())
-                            .error("Could not load HubEndpoint from class " + element.getAttribute(HUB_ENDPOINT_CLASS));
+                        NodeLogger.getLogger(getClass()).error("Could not load HubEndpoint from class "
+                            + element.getAttribute(HUB_ENDPOINT_CLASS) + ": " + ex);
                     }
                 }
             }
