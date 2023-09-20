@@ -410,9 +410,13 @@ public abstract class ScriptingService {
      * @param name The name of the sub item
      * @param type The display name of the type of the sub item
      * @param codeAlias The code alias needed to access this item in the code
+     * @param value the value of the item or null
      */
-    public static record InputOutputModelSubItem(String name, String type, String codeAlias) {
-
+    public static record InputOutputModelSubItem(String name, String type, String codeAlias, Object value) {
+        @SuppressWarnings("javadoc")
+        public InputOutputModelSubItem(final String name, final String type, final String codeAlias) {
+            this(name, type, codeAlias, null);
+        }
     }
 
     /**
