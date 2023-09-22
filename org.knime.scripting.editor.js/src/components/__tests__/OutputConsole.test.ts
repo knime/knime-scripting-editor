@@ -3,8 +3,11 @@ import { mount, flushPromises } from "@vue/test-utils";
 import OutputConsole from "@/components/OutputConsole.vue";
 import Button from "webapps-common/ui/components/Button.vue";
 import { Terminal } from "xterm";
+import { Consola } from "consola";
 
 vi.mock("xterm");
+vi.mock("Consola");
+vi.stubGlobal("consola", new Consola({}));
 
 describe("OutputConsole", () => {
   let term;
@@ -22,6 +25,7 @@ describe("OutputConsole", () => {
 
   it("write to console", async () => {
     const outputConsole = mount(OutputConsole);
+
     await flushPromises();
     term = vi.mocked(Terminal).mock.instances[0];
     expect(term.open).toHaveBeenCalledOnce();
@@ -37,6 +41,7 @@ describe("OutputConsole", () => {
 
   it("clear via click button", async () => {
     const outputConsole = mount(OutputConsole);
+
     await flushPromises();
     term = vi.mocked(Terminal).mock.instances[0];
     expect(term.open).toHaveBeenCalledOnce();

@@ -9,10 +9,14 @@ import FooterBar from "../FooterBar.vue";
 import CodeEditorControlBar from "../CodeEditorControlBar.vue";
 import InputOutputPane from "../InputOutputPane.vue";
 import SettingsPage from "../SettingsPage.vue";
+import { Consola } from "consola";
 
 vi.mock("monaco-editor");
 vi.mock("@/scripting-service");
 vi.mock("xterm");
+
+vi.mock("Consola");
+vi.stubGlobal("consola", new Consola({}));
 
 describe("ScriptingEditor", () => {
   afterEach(() => {
