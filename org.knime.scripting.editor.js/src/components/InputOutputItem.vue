@@ -12,6 +12,7 @@ export type InputOutputModel = {
 
 <script setup lang="ts">
 import Collapser from "webapps-common/ui/components/Collapser.vue";
+import Tooltip from "webapps-common/ui/components/Tooltip.vue";
 import { getScriptingService } from "@/scripting-service";
 const props = defineProps<{
   inputOutputItem: InputOutputModel;
@@ -32,39 +33,56 @@ const handleClick = (event: any, codeAlias?: string) => {
         <div class="title">
           {{ inputOutputItem.name }}
         </div>
-        <div
+        <Tooltip
           v-if="inputOutputItem.codeAlias"
-          class="code-alias"
-          @click="($event) => handleClick($event, inputOutputItem.codeAlias)"
+          class="tooltip"
+          :text="inputOutputItem.codeAlias"
         >
-          {{ inputOutputItem.codeAlias }}
-        </div>
+          <div
+            v-if="inputOutputItem.codeAlias"
+            class="code-alias"
+            @click="($event) => handleClick($event, inputOutputItem.codeAlias)"
+          >
+            {{ inputOutputItem.codeAlias }}
+          </div>
+        </Tooltip>
       </div>
     </template>
     <div v-if="props.inputOutputItem.subItems" class="collapser-content">
-      <div
+      <Tooltip
         v-for="subItem in props.inputOutputItem.subItems"
         :key="subItem.name"
-        class="sub-item"
-        :class="{ 'clickable-sub-item': subItem.codeAlias }"
-        @click="($event) => handleClick($event, subItem.codeAlias)"
+        class="tooltip"
+        :text="subItem.codeAlias"
       >
-        <div class="cell">{{ subItem.name }}</div>
-        <div class="cell">{{ subItem.type }}</div>
-      </div>
+        <div
+          :key="subItem.name"
+          class="sub-item"
+          :class="{ 'clickable-sub-item': subItem.codeAlias }"
+          @click="($event) => handleClick($event, subItem.codeAlias)"
+        >
+          <div class="cell">{{ subItem.name }}</div>
+          <div class="cell">{{ subItem.type }}</div>
+        </div>
+      </Tooltip>
     </div>
   </Collapser>
   <div v-else class="top-card bottom-border">
     <div class="title">
       {{ inputOutputItem.name }}
     </div>
-    <div
+    <Tooltip
       v-if="inputOutputItem.codeAlias"
-      class="code-alias"
-      @click="($event) => handleClick($event, inputOutputItem.codeAlias)"
+      class="tooltip"
+      :text="inputOutputItem.codeAlias"
     >
-      {{ inputOutputItem.codeAlias }}
-    </div>
+      <div
+        class="code-alias"
+        @click="($event) => handleClick($event, inputOutputItem.codeAlias)"
+      >
+        {{ inputOutputItem.codeAlias }}
+      </div>
+    </Tooltip>
   </div>
 </template>
 
@@ -82,11 +100,12 @@ const handleClick = (event: any, codeAlias?: string) => {
   justify-content: left;
   align-items: center;
   line-height: 26px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .has-collapser {
   padding-right: 32px;
+  overflow: visible;
 }
 
 .title {
@@ -134,6 +153,12 @@ const handleClick = (event: any, codeAlias?: string) => {
 }
 
 .collapser {
+  overflow: visible;
+
+  & :deep(.panel) {
+    overflow: visible;
+  }
+
   & :deep(.dropdown) {
     width: 20px;
     height: 20px;
