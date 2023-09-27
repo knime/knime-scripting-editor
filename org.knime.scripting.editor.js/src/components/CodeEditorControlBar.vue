@@ -25,7 +25,7 @@ const props = defineProps({
 });
 
 const setupOnClickOutside = () => {
-  const splitters = [...document.querySelectorAll(".splitpanes__splitter")].map(
+  const splitters = [...document.querySelectorAll(".s__splitter")].map(
     (splitter) => splitter as HTMLElement,
   );
   onClickOutside(

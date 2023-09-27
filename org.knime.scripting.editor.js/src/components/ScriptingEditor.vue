@@ -306,7 +306,7 @@ export default defineComponent({
   border-left: 1px solid var(--knime-silver-sand);
   border-right: 1px solid var(--knime-silver-sand);
   flex-grow: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 
@@ -367,11 +367,12 @@ export default defineComponent({
 
 .splitpanes__pane {
   transition: unset;
+  overflow: visible; // this 
 }
 
 .main-splitpane {
   height: calc(100vh - (2 * var(--controls-height)));
-  overflow: hidden;
+  overflow: visible;
 }
 
 .settings-page {

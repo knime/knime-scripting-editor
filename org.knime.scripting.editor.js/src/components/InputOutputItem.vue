@@ -87,6 +87,16 @@ const handleClick = (event: any, codeAlias?: string) => {
 </template>
 
 <style scoped lang="postcss">
+
+.tooltip {
+  :deep(.text) {
+    visibility: visible;
+    overflow: visible;
+    &::after {
+      z-index: 3000;
+    }
+  }
+}
 .top-card {
   min-height: 42px;
   background-color: var(--knime-porcelain);
