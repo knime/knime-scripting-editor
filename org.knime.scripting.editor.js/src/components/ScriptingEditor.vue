@@ -367,7 +367,7 @@ export default defineComponent({
 
 .splitpanes__pane {
   transition: unset;
-  overflow: visible; // this 
+  overflow: visible;
 }
 
 .main-splitpane {
