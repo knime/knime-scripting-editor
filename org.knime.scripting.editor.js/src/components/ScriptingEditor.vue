@@ -69,7 +69,12 @@ export default defineComponent({
       } as PaneSizes,
     },
   },
-  emits: ["monaco-created", "menu-item-clicked", "save-settings"],
+  emits: [
+    "monaco-created",
+    "menu-item-clicked",
+    "save-settings",
+    "toggle-settings-page",
+  ],
   data() {
     return {
       currentPaneSizes: {
@@ -106,6 +111,11 @@ export default defineComponent({
     isBottomPaneCollapsed() {
       return this.currentPaneSizes.bottom === 0;
     },
+  },
+  mounted() {
+    this.$emit("toggle-settings-page", () => {
+      this.showSettingsPage = !this.showSettingsPage;
+    });
   },
   methods: {
     collapsePane(pane: keyof PaneSizes) {

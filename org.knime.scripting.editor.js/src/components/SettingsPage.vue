@@ -67,5 +67,6 @@ const emit = defineEmits<{
   flex-direction: column;
   justify-content: flex-start;
   background-color: var(--knime-gray-ultra-light);
+  overflow-y: scroll;
 }
 </style>

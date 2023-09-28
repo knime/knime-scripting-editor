@@ -47,6 +47,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  readOnly: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Remember the model and editor so that we can dispose them when the component is unmounted
@@ -76,7 +80,7 @@ onMounted(async () => {
     monaco.Uri.parse(`inmemory://model/${props.fileName}`),
   );
 
-  const editorSettings = {
+  const editorSettings: monaco.editor.IEditorOptions = {
     minimap: { enabled: false },
     automaticLayout: true,
     glyphMargin: false,
@@ -84,6 +88,7 @@ onMounted(async () => {
       enabled: true,
     },
     scrollBeyondLastLine: true,
+    readOnly: props.readOnly,
     fixedOverflowWidgets: true,
     suggest: { showWords: false }, // Disable word suggestions - better suggestions are provided by the language server
   };
