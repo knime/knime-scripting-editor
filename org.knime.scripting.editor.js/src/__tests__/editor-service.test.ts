@@ -60,6 +60,21 @@ describe("editor-service", () => {
     expect(editorService.getSelectedLines()).toBeNull();
   });
 
+  describe("selectedLinesHandler", () => {
+    it("test register", () => {
+      const editorService = new EditorService();
+      editorService.initEditorService({
+        editor: editorMock as any,
+        editorModel: editorModelMock as any,
+      });
+      const handler = vi.fn();
+      editorService.registerSelectionHandler(handler);
+      expect(
+        editorService.editor?.onDidChangeCursorSelection,
+      ).toHaveBeenCalledWith(handler);
+    });
+  });
+
   describe("pasteToEditor", () => {
     it("pasteToEditor calls executeEdits", () => {
       const editorService = new EditorService();
