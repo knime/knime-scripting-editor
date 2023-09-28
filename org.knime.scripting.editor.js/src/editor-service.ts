@@ -85,6 +85,12 @@ export class EditorService {
     );
   }
 
+  public registerSelectionHandler(
+    handler: (e: monaco.ICursorSelectionChangedEvent) => void,
+  ): void {
+    this.editor!.onDidChangeCursorSelection(handler);
+  }
+
   public pasteToEditor(textToPaste: string): void {
     if (typeof this.editor === "undefined") {
       return;

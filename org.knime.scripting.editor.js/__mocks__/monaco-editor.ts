@@ -18,6 +18,7 @@ export const editor = {
         lineNumber: 123,
         column: 456,
       })),
+      onDidChangeCursorSelection: vi.fn(),
     };
   }),
   createDiffEditor: vi.fn((element: HTMLElement) => {
