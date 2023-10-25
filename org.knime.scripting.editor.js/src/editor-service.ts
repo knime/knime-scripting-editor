@@ -119,4 +119,11 @@ export class EditorService {
     }
     return this.editorModel.onDidChangeContent((event) => callback(event));
   }
+
+  public formatScript() {
+    if (typeof this.editor === "undefined") {
+      return null;
+    }
+    return this.editor.getAction("editor.action.formatDocument")?.run() ?? null;
+  }
 }

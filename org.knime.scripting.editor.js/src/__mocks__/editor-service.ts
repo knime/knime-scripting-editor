@@ -7,4 +7,5 @@ export const editorServiceMock = {
   setScript: vi.fn(() => {}),
   pasteToEditor: vi.fn(() => {}),
   setOnDidChangeContentListener: vi.fn(),
+  formatScript: vi.fn(),
 };

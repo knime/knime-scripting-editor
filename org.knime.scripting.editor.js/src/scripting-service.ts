@@ -194,6 +194,10 @@ class ScriptingService {
   public getOutputObjects(): Promise<InputOutputModel[]> {
     return this.sendToService("getOutputObjects");
   }
+
+  public formatScript(): Promise<void> | null {
+    return this._editorService.formatScript();
+  }
 }
 
 export type ScriptingServiceType = Pick<

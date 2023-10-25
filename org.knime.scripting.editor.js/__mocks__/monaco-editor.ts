@@ -12,6 +12,9 @@ export const editor = {
     element.innerHTML = "SCRIPTING EDITOR MOCK";
     return {
       name: "myEditor",
+      getAction: vi.fn(() => ({
+        run: vi.fn(),
+      })),
       getSelection: vi.fn(() => ({})),
       executeEdits: vi.fn(() => {}),
       pushUndoStop: vi.fn(() => {}),

@@ -69,6 +69,16 @@ describe("editor-service", () => {
     expect(editorModelMock.onDidChangeContent).toHaveBeenCalled();
   });
 
+  it("formatScript", () => {
+    const editorService = new EditorService();
+    editorService.editor = editorMock as any;
+    editorService.editorModel = editorModelMock as any;
+    editorService.formatScript();
+    expect(editorMock.getAction).toHaveBeenCalledWith(
+      "editor.action.formatDocument",
+    );
+  });
+
   describe("pasteToEditor", () => {
     it("pasteToEditor calls executeEdits", () => {
       const editorService = new EditorService();

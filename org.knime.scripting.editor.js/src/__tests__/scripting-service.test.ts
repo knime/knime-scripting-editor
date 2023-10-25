@@ -354,6 +354,12 @@ describe("scripting-service", () => {
         editorServiceMock.setOnDidChangeContentListener,
       ).toHaveBeenCalled();
     });
+
+    it("calls formatScript of editorService", () => {
+      const scriptingService = getScriptingServiceWithoutEventPoller();
+      scriptingService.formatScript();
+      expect(editorServiceMock.formatScript).toHaveBeenCalled();
+    });
   });
 
   describe("input / output objects", () => {
