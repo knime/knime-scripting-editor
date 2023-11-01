@@ -29,9 +29,10 @@ export const INPUT_OUTPUT_DRAG_EVENT_ID = "input_output_drag_event";
 <script setup lang="ts">
 import Collapser from "webapps-common/ui/components/Collapser.vue";
 import { computed, ref } from "vue";
-import { createDragGhost, removeDragGhost } from "./utils/dragGhost";
 import { useInputOutputSelectionStore } from "@/store";
 import Handlebars from "handlebars";
+import { createDragGhosts } from "webapps-common/ui/components/FileExplorer/dragGhostHelpers";
+import { EMPTY_DRAG_IMAGE } from "webapps-common/ui/components/FileExplorer/useItemDragging";
 
 const props = defineProps<{
   inputOutputItem: InputOutputModel;
@@ -74,6 +75,9 @@ const getSubItemCodeToInsert = () => {
   return codeToInsert;
 };
 
+const subItemRefs = ref<HTMLDivElement[]>([]);
+const removeDragGhost = ref<() => void>(() => {});
+
 const onSubItemDragStart = (event: DragEvent, index: number) => {
   if (!subItemSelection.value.has(index)) {
     inputOutputSelectionStore.clearSelection();
@@ -85,42 +89,50 @@ const onSubItemDragStart = (event: DragEvent, index: number) => {
     );
   }
   draggedItem.value = props.inputOutputItem.subItems?.[index]!;
-  const width = (event.target as any).offsetWidth;
-  const dragGhost = createDragGhost({
-    width: `${width}px`,
-    elements: [
-      { text: draggedItem.value.name },
-      { text: draggedItem.value.type },
-    ],
-    numSelectedItems: subItemSelection.value.size,
+  const { removeGhosts } = createDragGhosts({
+    badgeCount: subItemSelection.value.size,
+    dragStartEvent: event,
+    selectedTargets: [...subItemSelection.value].map((item) => ({
+      textContent: props.inputOutputItem.subItems?.[item].name ?? "",
+      targetEl: subItemRefs.value[item],
+    })),
   });
-  event.dataTransfer?.setDragImage(dragGhost, 0, 0);
+  removeDragGhost.value = removeGhosts;
+
+  event.dataTransfer?.setDragImage(EMPTY_DRAG_IMAGE, 0, 0);
   const codeToInsert = getSubItemCodeToInsert();
   event.dataTransfer?.setData("text", codeToInsert);
   event.dataTransfer?.setData("eventId", INPUT_OUTPUT_DRAG_EVENT_ID);
 };
 
 const onSubItemDragEnd = () => {
-  removeDragGhost();
+  removeDragGhost.value();
 };
 
+const headerCodeAliasElement = ref<HTMLDivElement | null>(null);
 const isDraggingHeader = ref(false);
 const onHeaderDragStart = (event: DragEvent, codeAlias: string) => {
   isDraggingHeader.value = true;
-  const dragGhost = createDragGhost({
-    width: "auto",
-    elements: [{ text: props.inputOutputItem.codeAlias! }],
-    numSelectedItems: subItemSelection.value.size,
-    font: "monospace",
+  const { removeGhosts } = createDragGhosts({
+    badgeCount: 1,
+    dragStartEvent: event,
+    selectedTargets: [
+      {
+        textContent: props.inputOutputItem.codeAlias ?? "",
+        targetEl: headerCodeAliasElement.value!,
+      },
+    ],
   });
-  event.dataTransfer?.setDragImage(dragGhost, 0, 0);
+  removeDragGhost.value = removeGhosts;
+
+  event.dataTransfer?.setDragImage(EMPTY_DRAG_IMAGE, 0, 0);
   event.dataTransfer?.setData("text", codeAlias);
   event.dataTransfer?.setData("eventId", INPUT_OUTPUT_DRAG_EVENT_ID);
 };
 
 const onHeaderDragEnd = () => {
   isDraggingHeader.value = false;
-  removeDragGhost();
+  removeDragGhost.value();
 };
 </script>
 
@@ -133,6 +145,7 @@ const onHeaderDragEnd = () => {
         </div>
         <div
           v-if="inputOutputItem.codeAlias"
+          ref="headerCodeAliasElement"
           class="code-alias"
           :class="{
             'code-alias-dragging': isDraggingHeader,
@@ -152,6 +165,7 @@ const onHeaderDragEnd = () => {
     <div v-if="props.inputOutputItem.subItems" class="collapser-content">
       <div
         v-for="(subItem, index) in props.inputOutputItem.subItems"
+        ref="subItemRefs"
         :key="index"
         class="sub-item"
         :class="{
