@@ -108,10 +108,9 @@ onUnmounted(() => {
 </style>
 
 <style lang="postcss" scoped>
-
 .button {
   width: 25px;
-  height: 25px;  
+  height: 25px;
   padding: 2px;
 
   &:hover {
@@ -121,15 +120,17 @@ onUnmounted(() => {
     border-radius: 50px;
   }
 }
+
 .clear-button {
   position: absolute;
   z-index: 1;
   top: -30px;
   right: 15px;
+
   & svg {
     width: 17px;
     height: 17px;
-    margin-right: 0px;
+    margin-right: 0;
   }
 }
 
