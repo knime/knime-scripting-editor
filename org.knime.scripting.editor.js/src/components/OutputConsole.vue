@@ -108,11 +108,29 @@ onUnmounted(() => {
 </style>
 
 <style lang="postcss" scoped>
+
+.button {
+  width: 25px;
+  height: 25px;  
+  padding: 2px;
+
+  &:hover {
+    outline: none;
+    background-color: var(--theme-dropdown-background-color-hover);
+    color: var(--theme-dropdown-foreground-color-hover);
+    border-radius: 50px;
+  }
+}
 .clear-button {
   position: absolute;
   z-index: 1;
-  top: -50px;
-  right: 0;
+  top: -30px;
+  right: 15px;
+  & svg {
+    width: 17px;
+    height: 17px;
+    margin-right: 0px;
+  }
 }
 
 .console {

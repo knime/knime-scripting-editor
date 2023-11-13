@@ -321,7 +321,7 @@ export default defineComponent({
               <div class="tab-bar-wrapper">
                 <TabBar
                   v-model="bottomPaneActiveTab"
-                  class="bottom-tab-bar"
+                  class="tabBar"
                   :possible-values="bottomPaneOptions"
                 />
               </div>
@@ -362,6 +362,32 @@ export default defineComponent({
   height: calc(100% - var(--controls-height));
 }
 
+.tabBar {
+  margin-top: 5px;
+  height: 26px;
+  padding: 0px 10px;
+  :deep(.carousel::after) {
+    bottom: 0px;
+    margin-bottom: 3px;
+  }
+
+  & :deep(.tab-bar) {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    & span {
+      font-family: "Roboto Condensed";
+      font-weight: 400;
+      font-size: 14px; 
+      line-height: 16px;
+      height: 16px;
+    } ::after{ 
+      top: 20px;
+      border-top: 3px solid var(--knime-silver-sand);
+    }
+  }
+}
+
+
 .tab-bar-container {
   display: flex;
   height: 100%;
@@ -371,17 +397,6 @@ export default defineComponent({
 
   & .tab-bar-wrapper {
     margin-right: 10px;
-
-    & .bottom-tab-bar {
-      & :deep(.tab-bar) {
-        padding-bottom: 0;
-        margin-bottom: 0;
-      }
-
-      & :deep(.carousel::after) {
-        bottom: 5px;
-      }
-    }
   }
 
   & .console-container {
