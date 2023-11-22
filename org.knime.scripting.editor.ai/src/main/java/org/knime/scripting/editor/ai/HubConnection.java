@@ -106,6 +106,11 @@ public final class HubConnection implements HubEndpoint { // NOSONAR: singleton 
     }
 
     @Override
+    public String getHubId() {
+        return m_hubEndpoint.getHubId();
+    }
+
+    @Override
     public boolean loginToHub() {
         return m_hubEndpoint.loginToHub();
     }

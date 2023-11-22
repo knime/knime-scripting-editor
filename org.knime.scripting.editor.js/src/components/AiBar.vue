@@ -1,39 +1,37 @@
 <script setup lang="ts">
+import { useTextareaAutosize } from "@vueuse/core";
+import { editor } from "monaco-editor";
 import {
   computed,
-  ref,
-  type PropType,
+  nextTick,
   onMounted,
   onUnmounted,
-  nextTick,
+  ref,
+  watch,
+  type PropType,
 } from "vue";
-import { useTextareaAutosize } from "@vueuse/core";
-import SendIcon from "webapps-common/ui/assets/img/icons/paper-flier.svg";
 import AbortIcon from "webapps-common/ui/assets/img/icons/cancel-execution.svg";
 import ExportIcon from "webapps-common/ui/assets/img/icons/export.svg";
 import LinkIcon from "webapps-common/ui/assets/img/icons/link.svg";
-import LoadingIcon from "webapps-common/ui/components/LoadingIcon.vue";
+import SendIcon from "webapps-common/ui/assets/img/icons/paper-flier.svg";
 import Button from "webapps-common/ui/components/Button.vue";
 import FunctionButton from "webapps-common/ui/components/FunctionButton.vue";
+import LoadingIcon from "webapps-common/ui/components/LoadingIcon.vue";
+
 import { getScriptingService } from "@/scripting-service";
-import CodeEditor from "./CodeEditor.vue";
-import { editor } from "monaco-editor";
 import {
-  usePromptResponseStore,
+  aiCodeAssistantStatus,
   clearPromptResponseStore,
+  loginToHub,
   showDisclaimer,
-  type PromptResponseStore,
+  usePromptResponseStore,
   type Message,
+  type PromptResponseStore,
 } from "@/store/ai-bar";
+import CodeEditor from "./CodeEditor.vue";
 import type { PaneSizes } from "./ScriptingEditor.vue";
 
-type Status =
-  | "idle"
-  | "error"
-  | "waiting"
-  | "uninstalled"
-  | "unauthorized"
-  | "readonly";
+type Status = "idle" | "error" | "waiting" | "uninstalled" | "unauthorized";
 
 // sizes in viewport width/height
 const DEFAULT_AI_BAR_WIDTH = 65;
@@ -163,35 +161,31 @@ const aiBarWidth = computed(() => {
   return Math.min(DEFAULT_AI_BAR_WIDTH, 100 - leftPosition.value);
 });
 
-onMounted(async () => {
-  if (!(await getScriptingService().isCodeAssistantInstalled())) {
+/**
+ * Update the status of the bar if the installation or authentication status changes
+ */
+const onStatusUpdate = () => {
+  if (!aiCodeAssistantStatus.installed) {
     status.value = "uninstalled";
-  } else if (
-    (await getScriptingService().getInitialSettings()).scriptUsedFlowVariable
-  ) {
-    status.value = "readonly";
-  } else if (!(await getScriptingService().sendToService("isLoggedIn"))) {
+  } else if (!aiCodeAssistantStatus.loggedIn) {
     status.value = "unauthorized";
+  } else if (
+    status.value === "uninstalled" ||
+    status.value === "unauthorized"
+  ) {
+    // Change the status only to idle if we were uninstalled or unauthorized before
+    status.value = "idle";
   }
-});
+};
+
+watch(aiCodeAssistantStatus, onStatusUpdate);
+onMounted(onStatusUpdate);
 
 onUnmounted(() => {
   if (status.value === "waiting") {
     abortRequest();
   }
 });
-
-const handleLoginStatus = (loginStatus: boolean) => {
-  if (loginStatus) {
-    status.value = "idle";
-  }
-};
-
-scriptingService.registerEventHandler("hubLogin", handleLoginStatus);
-
-const tryLogin = () => {
-  getScriptingService().sendToService("loginToHub");
-};
 
 // used to add a divider between notification bar / chat controls and above
 const hasTopContent = computed(() => {
@@ -216,7 +210,7 @@ const hasTopContent = computed(() => {
     }"
   >
     <div
-      v-show="status === 'uninstalled'"
+      v-show="!aiCodeAssistantStatus.installed"
       class="notification-bar"
       :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
     >
@@ -242,26 +236,11 @@ const hasTopContent = computed(() => {
         To start generating code with our AI assistant, please log into your
         <i>KNIME Hub</i> account
       </span>
-      <Button compact primary class="notification-button" @click="tryLogin()">
-        <LinkIcon />Login to KNIME Hub
+      <Button compact primary class="notification-button" @click="loginToHub()">
+        Login to {{ aiCodeAssistantStatus.hubId }}
       </Button>
     </div>
-    <div
-      v-show="status === 'readonly'"
-      class="notification-bar"
-      :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
-    >
-      <span class="notification">
-        Script is overwritten by a flow variable.
-      </span>
-    </div>
-    <div
-      v-show="
-        status !== 'uninstalled' &&
-        status !== 'unauthorized' &&
-        status !== 'readonly'
-      "
-    >
+    <div v-show="status !== 'uninstalled' && status !== 'unauthorized'">
       <Transition name="disclaimer-slide-fade">
         <div v-if="showDisclaimer" class="disclaimer-container">
           <div class="disclaimer-text">

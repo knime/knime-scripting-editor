@@ -57,6 +57,11 @@ import java.io.IOException;
  */
 public interface HubEndpoint {
     /**
+     * @return the ID of the Hub hosting the backend
+     */
+    String getHubId();
+
+    /**
      * Log in to the currently selected Hub end point
      *
      * @return true if already logged in or the login was successful

@@ -5,6 +5,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 
 import AiBar from "../AiBar.vue";
 import { getScriptingService } from "@/scripting-service";
+import { aiCodeAssistantStatus } from "@/store/ai-bar";
 
 vi.mock("@/scripting-service");
 
@@ -13,12 +14,8 @@ describe("CodeEditorControlBar", () => {
     vi.mocked(getScriptingService().inputsAvailable).mockReturnValue(
       Promise.resolve(true),
     );
-    vi.mocked(getScriptingService().isCodeAssistantEnabled).mockReturnValue(
-      Promise.resolve(true),
-    );
-    vi.mocked(getScriptingService().isCodeAssistantInstalled).mockReturnValue(
-      Promise.resolve(true),
-    );
+    aiCodeAssistantStatus.enabled = true;
+    aiCodeAssistantStatus.installed = true;
   });
 
   afterEach(() => {
@@ -26,9 +23,7 @@ describe("CodeEditorControlBar", () => {
   });
 
   it("hides ai button if ai assistant disabled", () => {
-    vi.mocked(getScriptingService().isCodeAssistantEnabled).mockReturnValueOnce(
-      Promise.resolve(false),
-    );
+    aiCodeAssistantStatus.enabled = false;
     const wrapper = mount(CodeEditorControlBar);
     expect(wrapper.findComponent({ ref: "aiButton" }).exists()).toBeFalsy();
   });
@@ -100,11 +95,23 @@ describe("CodeEditorControlBar", () => {
     expect(button.props().disabled).toBeTruthy();
   });
 
-  it("test aiButton is enabled even if code assistance is not installed", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockReturnValueOnce(Promise.resolve(false));
+  it("test aiButton is disabled if script overwritten by flow variable", async () => {
+    vi.mocked(getScriptingService().getInitialSettings).mockReturnValueOnce(
+      Promise.resolve({
+        script: "my script",
+        scriptUsedFlowVariable: "myVar",
+      }),
+    );
 
+    const wrapper = mount(CodeEditorControlBar);
+    await flushPromises();
+    const button = wrapper.findComponent({ ref: "aiButton" });
+
+    expect(button.props().disabled).toBeTruthy();
+  });
+
+  it("test aiButton is enabled even if code assistance is not installed", async () => {
+    aiCodeAssistantStatus.installed = false;
     const wrapper = mount(CodeEditorControlBar);
     await flushPromises();
     const button = wrapper.findComponent({ ref: "aiButton" });

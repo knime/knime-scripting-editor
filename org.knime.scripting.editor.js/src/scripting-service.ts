@@ -176,14 +176,6 @@ class ScriptingService {
     return this._editorService.setOnDidChangeContentListener(callback);
   }
 
-  public isCodeAssistantEnabled(): Promise<boolean> {
-    return this.sendToService("isCodeAssistantEnabled");
-  }
-
-  public isCodeAssistantInstalled(): Promise<boolean> {
-    return this.sendToService("isCodeAssistantInstalled");
-  }
-
   public inputsAvailable(): Promise<boolean> {
     return this.sendToService("inputsAvailable");
   }

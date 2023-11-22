@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, type PropType } from "vue";
-import Button from "webapps-common/ui/components/Button.vue";
-import AiCode from "webapps-common/ui/assets/img/icons/ai-general.svg";
-import AiBar from "./AiBar.vue";
-import { getScriptingService } from "@/scripting-service";
 import { onClickOutside } from "@vueuse/core";
+import { nextTick, onMounted, ref, type PropType } from "vue";
+import AiCode from "webapps-common/ui/assets/img/icons/ai-general.svg";
+import Button from "webapps-common/ui/components/Button.vue";
+
+import { getScriptingService } from "@/scripting-service";
+import { aiCodeAssistantStatus } from "@/store/ai-bar";
+import AiBar from "./AiBar.vue";
 import type { PaneSizes } from "./ScriptingEditor.vue";
 
 const showBar = ref<boolean>(false);
 const aiBar = ref(null);
 const aiButton = ref(null);
 
-const showAiButton = ref<boolean>(false);
 const enableAiButton = ref<boolean>(false);
 
 const props = defineProps({
@@ -41,8 +42,10 @@ const setupOnClickOutside = () => {
 };
 
 onMounted(async () => {
-  showAiButton.value = await getScriptingService().isCodeAssistantEnabled();
-  enableAiButton.value = await getScriptingService().inputsAvailable();
+  // Only enable if inputs are available and the script is not controlled by a flow variable
+  enableAiButton.value =
+    (await getScriptingService().inputsAvailable()) &&
+    !(await getScriptingService().getInitialSettings()).scriptUsedFlowVariable;
   nextTick(() => {
     setupOnClickOutside();
   });
@@ -62,7 +65,7 @@ onMounted(async () => {
   <div class="controls">
     <div>
       <Button
-        v-if="showAiButton"
+        v-if="aiCodeAssistantStatus.enabled"
         ref="aiButton"
         class="ai-button"
         :disabled="!enableAiButton"

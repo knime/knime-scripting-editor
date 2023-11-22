@@ -281,18 +281,13 @@ public abstract class ScriptingService {
             m_languageServer.ifPresent(ls -> ls.sendMessage(message));
         }
 
-        /**
-         * @return True if AI supported code generation is not disabled via the feature flag
-         */
-        public final boolean isCodeAssistantEnabled() {
-            return AI_ASSISTANT_FEATURE_ENABLED;
-        }
-
-        /**
-         * @return True if AI supported code generation is installed
-         */
-        public final boolean isCodeAssistantInstalled() {
-            return AI_ASSISTANT_FEATURE_ENABLED && HubConnection.INSTANCE.isAvailable();
+        /** @return the current {@link AiCodeAssistantStatus} */
+        public final AiCodeAssistantStatus getAiCodeAssistantStatus() {
+            var enabled = AI_ASSISTANT_FEATURE_ENABLED;
+            var installed = enabled && HubConnection.INSTANCE.isAvailable();
+            var loggedIn = installed && HubConnection.INSTANCE.isLoggedIn();
+            var hubId = installed ? HubConnection.INSTANCE.getHubId() : null;
+            return new AiCodeAssistantStatus(enabled, installed, loggedIn, hubId);
         }
 
         /**
@@ -305,13 +300,6 @@ public abstract class ScriptingService {
                 boolean status = HubConnection.INSTANCE.loginToHub();
                 sendEvent("hubLogin", status);
             }).start();
-        }
-
-        /**
-         * @return true if the user is logged in to the currently selected Hub end point
-         */
-        public boolean isLoggedIn() {
-            return HubConnection.INSTANCE.isLoggedIn();
         }
 
         /**
@@ -459,5 +447,16 @@ public abstract class ScriptingService {
          * @throws IOException if an I/O error occurs starting the process
          */
         LanguageServerProxy start() throws IOException;
+    }
+
+    /**
+     * Status information about the the Ai supported code generation
+     *
+     * @param enabled if the Ai assistant is not disabled via the feature flag
+     * @param installed if the Ai assistant is installed
+     * @param loggedIn if the user is logged into the Ai assistant
+     * @param hubId the id of the Hub used for the Ai assistant
+     */
+    public static record AiCodeAssistantStatus(boolean enabled, boolean installed, boolean loggedIn, String hubId) {
     }
 }

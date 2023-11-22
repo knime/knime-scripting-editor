@@ -5,10 +5,12 @@ import { getScriptingService } from "@/scripting-service";
 import CodeEditor from "../CodeEditor.vue";
 import * as monaco from "monaco-editor";
 import {
+  aiCodeAssistantStatus,
   clearPromptResponseStore,
   usePromptResponseStore,
 } from "../../store/ai-bar";
 import LoadingIcon from "webapps-common/ui/components/LoadingIcon.vue";
+import { nextTick } from "vue";
 
 vi.mock("@/scripting-service");
 vi.mock("monaco-editor");
@@ -16,14 +18,12 @@ vi.mock("monaco-editor");
 describe("AiBar", () => {
   beforeEach(() => {
     clearPromptResponseStore();
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockImplementation(() => {
-      return Promise.resolve(true);
+    Object.assign(aiCodeAssistantStatus, {
+      enabled: true,
+      installed: true,
+      loggedIn: true,
+      hubId: "My special Hub",
     });
-    vi.mocked(getScriptingService().sendToService).mockReturnValue(
-      Promise.resolve(true), // logged in = true
-    );
     const mockInstance = { dispose: vi.fn(), setModel: vi.fn() };
     // @ts-ignore createModel is a mock
     monaco.editor.createModel.mockReturnValue(mockInstance);
@@ -146,14 +146,6 @@ describe("AiBar", () => {
   });
 
   it("show disclaimer on first startup", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockImplementation(() => {
-      return Promise.resolve(true);
-    });
-    vi.mocked(getScriptingService().sendToService).mockReturnValue(
-      Promise.resolve(true), // logged in = true
-    );
     const bar = mount(AiBar);
     await flushPromises();
     (bar.vm as any).showDisclaimer = true;
@@ -163,9 +155,7 @@ describe("AiBar", () => {
   });
 
   it("show login button if not logged in yet", async () => {
-    vi.mocked(getScriptingService().sendToService).mockReturnValueOnce(
-      Promise.resolve(false),
-    );
+    aiCodeAssistantStatus.loggedIn = false;
     const bar = mount(AiBar);
     await flushPromises();
     const downloadNotification = bar.findAll(".notification-bar").at(0);
@@ -177,13 +167,11 @@ describe("AiBar", () => {
 
     const loginButton = loginNotification?.find(".notification-button");
     expect(loginButton?.exists()).toBeTruthy();
-    expect(loginButton?.text()).toBe("Login to KNIME Hub");
+    expect(loginButton?.text()).toBe("Login to My special Hub");
   });
 
   it("show install button if not available", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockReturnValueOnce(Promise.resolve(false));
+    aiCodeAssistantStatus.installed = false;
     const bar = mount(AiBar);
     await flushPromises();
     const downloadNotification = bar.findAll(".notification-bar").at(0);
@@ -196,31 +184,6 @@ describe("AiBar", () => {
     const downloadButton = downloadNotification?.find(".notification-button");
     expect(downloadButton?.exists()).toBeTruthy();
     expect(downloadButton?.text()).toBe("Download from KNIME Hub");
-  });
-
-  it("show flow variable message if readonly", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockReturnValueOnce(Promise.resolve(true));
-    vi.mocked(getScriptingService().getInitialSettings).mockReturnValueOnce(
-      Promise.resolve({
-        script: "my script",
-        scriptUsedFlowVariable: "myVar",
-      }),
-    );
-    const bar = mount(AiBar);
-    await flushPromises();
-    const downloadNotification = bar.findAll(".notification-bar").at(0);
-    const loginNotification = bar.findAll(".notification-bar").at(1);
-    expect(downloadNotification?.isVisible()).toBeFalsy();
-    expect(loginNotification?.isVisible()).toBeFalsy();
-
-    const readonlyNotification = bar.findAll(".notification-bar").at(2);
-    expect(readonlyNotification?.exists()).toBeTruthy();
-    expect(readonlyNotification?.isVisible()).toBeTruthy();
-    expect(readonlyNotification?.text()).toBe(
-      "Script is overwritten by a flow variable.",
-    );
   });
 
   it("neither install nor login buttons are visible if ai assistant is ready to be used", async () => {
@@ -277,5 +240,38 @@ describe("AiBar", () => {
     expect(getScriptingService().sendToService).not.toHaveBeenCalledWith(
       "abortSuggestCodeRequest",
     );
+  });
+
+  describe("status updates", () => {
+    it("goes to ready if status changes to installed and logged in", async () => {
+      aiCodeAssistantStatus.installed = false;
+      aiCodeAssistantStatus.loggedIn = false;
+      const bar = mount(AiBar);
+      await flushPromises();
+      aiCodeAssistantStatus.installed = true;
+      aiCodeAssistantStatus.loggedIn = true;
+      await flushPromises();
+      const downloadNotification = bar.findAll(".notification-bar").at(0);
+      const loginNotification = bar.findAll(".notification-bar").at(1);
+      expect(downloadNotification?.exists()).toBeTruthy();
+      expect(loginNotification?.exists()).toBeTruthy();
+      expect(downloadNotification?.isVisible()).toBeFalsy();
+      expect(loginNotification?.isVisible()).toBeFalsy();
+    });
+
+    it("goes to ready if user logs in", async () => {
+      aiCodeAssistantStatus.loggedIn = false;
+      const bar = mount(AiBar);
+      await nextTick();
+      const loginNotification = bar.findAll(".notification-bar").at(1);
+      expect(loginNotification?.exists()).toBeTruthy();
+      expect(loginNotification?.isVisible()).toBeTruthy();
+      aiCodeAssistantStatus.loggedIn = true;
+      await nextTick();
+      const loginNotification2 = bar.findAll(".notification-bar").at(1);
+      expect(loginNotification2?.exists()).toBeTruthy();
+      console.log(loginNotification2?.isVisible());
+      expect(loginNotification2?.isVisible()).toBeFalsy();
+    });
   });
 });
