@@ -5,6 +5,7 @@ import OutputConsole, {
 } from "@/components/OutputConsole.vue";
 import ScriptingEditor from "@/components/ScriptingEditor.vue";
 import { type SettingsMenuItem } from "@/components/SettingsPage.vue";
+import CodeEditorControlBar from "@/components/CodeEditorControlBar.vue";
 
 import type {
   UseCodeEditorParams,
@@ -12,7 +13,7 @@ import type {
   UseDiffEditorParams,
   UseDiffEditorReturn,
 } from "@/editor";
-import editor from "@/editor";
+import editor, { useCodeEditor } from "@/editor";
 
 import { consoleHandler } from "@/consoleHandler";
 import {
@@ -28,6 +29,8 @@ export {
   getScriptingService,
   OutputConsole,
   ScriptingEditor,
+  CodeEditorControlBar,
+  useCodeEditor,
 };
 export type {
   ConsoleHandler,

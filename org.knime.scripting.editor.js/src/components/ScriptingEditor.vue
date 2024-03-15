@@ -17,12 +17,12 @@ import OutputConsole from "./OutputConsole.vue";
 import type { SettingsMenuItem } from "./SettingsPage.vue";
 import SettingsPage from "./SettingsPage.vue";
 import { setConsoleHandler } from "@/consoleHandler";
-import MainEditorPanel from "@/components/MainEditorPanel.vue";
+import MainEditorPane from "./MainEditorPane.vue";
 import {
   MIN_WIDTH_FOR_DISPLAYING_PANES,
   type PaneSizes,
 } from "@/components/utils/paneSizes";
-import CodeEditorControlBar from "@/components/CodeEditorControlBar.vue";
+import CodeEditorControlBar from "./CodeEditorControlBar.vue";
 
 const commonMenuItems: MenuItem[] = [
   // TODO: add actual common menu items
@@ -30,9 +30,9 @@ const commonMenuItems: MenuItem[] = [
 
 // Props
 interface Props {
-  title: string;
-  language: string;
-  fileName: string;
+  title?: string;
+  language?: string;
+  fileName?: string;
   rightPaneLayout?: "fixed" | "relative";
   menuItems?: MenuItem[];
   showControlBar?: boolean;
@@ -52,11 +52,15 @@ const props = withDefaults(defineProps<Props>(), {
   }),
   rightPaneMinimumWidthInPixel: () => 0,
   toSettings: (settings: NodeSettings) => settings,
+  fileName: "main.knexp", // only used for the main editor
+  title: "Scripting Editor",
+  language: "knime-expression",
 });
 
 const isRightPaneCollapsable = computed(
   () => props.rightPaneMinimumWidthInPixel === 0,
 );
+const emit = defineEmits(["menu-item-clicked"]);
 
 // Splitpane sizes
 const largeModePaneSizes = reactive<PaneSizes>({
@@ -160,8 +164,6 @@ const onDropEventHandlerCreated = (handler: (payload: DragEvent) => void) => {
   dropEventHandler.value = handler;
 };
 
-const emit = defineEmits(["menu-item-clicked"]);
-
 // Menu items and settings pane
 const showSettingsPage = ref(false);
 const onMenuItemClicked = (args: { event: Event; item: SettingsMenuItem }) => {
@@ -179,10 +181,15 @@ const onConsoleCreated = (handler: ConsoleHandler) => {
   initConsoleEventHandler();
 };
 
+// Convenient to have this computed property for reactive components
+const showControlBarDynamic = computed(() => {
+  return props.showControlBar && !isSlimMode.value;
+});
+
 // SplitPanes does interfere with the usage of flex box so the following line
 // is a workaround to allow to hide the control bar
 const controlBarHeight = computed(() => {
-  return props.showControlBar && !isSlimMode.value ? "40px" : "0px";
+  return showControlBarDynamic.value ? "40px" : "0px";
 });
 </script>
 
@@ -276,22 +283,42 @@ const controlBarHeight = computed(() => {
                 :size="usedHorizontalCodeEditorPaneSize"
                 min-size="25"
               >
-                <MainEditorPanel
-                  :language="props.language"
-                  :file-name="props.fileName"
-                  :drop-event-handler="dropEventHandler"
-                  :to-settings="props.toSettings"
-                  class="main-editor-panel"
-                />
-                <CodeEditorControlBar
-                  v-if="showControlBar && !isSlimMode"
-                  :language="language"
-                  :current-pane-sizes="currentPaneSizes"
-                >
-                  <template #controls>
-                    <slot name="code-editor-controls" />
-                  </template>
-                </CodeEditorControlBar>
+                <template v-if="$slots.editor">
+                  <div
+                    class="multi-editor-container"
+                    :class="{ 'has-control-bar': showControlBarDynamic }"
+                    tabindex="-1"
+                  >
+                    <!-- Not sure why this is focusable by default... -->
+                    <slot name="editor" />
+                  </div>
+                </template>
+                <template v-else>
+                  <div
+                    class="multi-editor-container"
+                    :class="{ 'has-control-bar': showControlBarDynamic }"
+                    tabindex="-1"
+                  >
+                    <MainEditorPane
+                      :file-name="fileName"
+                      :language="props.language"
+                      :show-control-bar="showControlBarDynamic"
+                      :drop-event-handler="dropEventHandler"
+                      :to-settings="props.toSettings"
+                    />
+                  </div>
+                </template>
+                <span class="run-button-panel">
+                  <CodeEditorControlBar
+                    v-if="showControlBarDynamic"
+                    :language="language"
+                    :current-pane-sizes="currentPaneSizes"
+                  >
+                    <template #controls>
+                      <slot name="code-editor-controls" />
+                    </template>
+                  </CodeEditorControlBar>
+                </span>
               </pane>
               <pane
                 data-testid="rightPane"
@@ -461,5 +488,43 @@ const controlBarHeight = computed(() => {
 
 .scrollable-y {
   overflow-y: auto;
+}
+
+/* Make the AI button behave nicely with the run button */
+:deep(.controls) {
+  width: 100%;
+  padding: 0 10px;
+  border-top: none;
+  background-color: none;
+}
+
+/* We need to reduce the size of this pane slightly iff there's a control bar */
+.multi-editor-container.has-control-bar {
+  height: calc(100% - var(--controls-height));
+}
+
+.multi-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  /* Enable scrolling if we have a lot of editors */
+  background-color: var(--knime-porcelain);
+  overflow-y: scroll;
+}
+
+.editor-and-controls-container {
+  flex-grow: 1;
+}
+
+.run-button-panel {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: var(--controls-height);
+  margin: 0;
+  background-color: var(--knime-gray-light-semi);
+  background-clip: padding-box;
+  border-top: 1px solid var(--knime-silver-sand);
 }
 </style>
