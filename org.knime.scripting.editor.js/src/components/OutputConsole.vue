@@ -76,6 +76,14 @@ term.attachCustomKeyEventHandler((e) => {
       copyToClipboard(selection);
     }
     return false;
+  } else if (e.key === "Tab") {
+    // We don't want xterm to handle this itself, so return false.
+    return false;
+  } else if (e.key === "Escape") {
+    // Blur the terminal, and also return false so xterm doesn't try
+    // to handle the keypress.
+    term.blur();
+    return false;
   }
   return true;
 });
@@ -113,13 +121,18 @@ onUnmounted(() => {
 
 <template>
   <div class="console">
+    <!-- The order of elements here is unfortunately important so we can jump from console to clear. -->
+    <div ref="termRef" class="terminal" data-key-focus-paintable />
     <div class="console-overlay">
       <slot name="console-status" />
-      <FunctionButton class="clear-button" @click="term.reset()">
+      <FunctionButton
+        class="clear-button"
+        data-key-focus-paintable
+        @click="term.reset()"
+      >
         <TrashIcon />
       </FunctionButton>
     </div>
-    <div ref="termRef" class="terminal" />
   </div>
 </template>
 
@@ -127,7 +140,7 @@ onUnmounted(() => {
 @import url("xterm/css/xterm.css");
 </style>
 
-<style lang="postcss" scoped>
+<style lang="css" scoped>
 .console-overlay {
   position: absolute;
   display: flex;
@@ -142,6 +155,33 @@ onUnmounted(() => {
 
 .console {
   height: 100%;
+}
+
+.terminal.key-focus-painted:focus-within :deep(> div:first-of-type::after) {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: inset 0 0 3px 3px var(--knime-cornflower);
+  padding: 5px;
+  margin: -5px;
+}
+
+.clear-button.key-focus-painted:focus-within::after {
+  border-radius: 50%;
+  box-shadow: inset 0 0 3px 3px var(--knime-cornflower);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .terminal {

@@ -184,10 +184,67 @@ const onConsoleCreated = (handler: ConsoleHandler) => {
 const controlBarHeight = computed(() => {
   return props.showControlBar && !isSlimMode.value ? "40px" : "0px";
 });
+
+const focusReactivePaintedStoredData: Array<any> = [];
+
+// This directive is used to toggle focus highlighting off on click and on on keypress
+const vReactiveFocusPainted = {
+  mounted(el: Element) {
+    const updateFocusPaintedClasses = (shouldFocusBePainted: boolean) => {
+      const focusPaintableElements = el.querySelectorAll(
+        "[data-key-focus-paintable]",
+      );
+      focusPaintableElements.forEach((element: Element) => {
+        element.classList.toggle("key-focus-painted", shouldFocusBePainted);
+      });
+    };
+    const turnFocusPaintingOn = (evt: KeyboardEvent) => {
+      // Only update focus painted classes if the target is not a text input or textarea
+      // TODO Is this what we want?
+      if (
+        !(
+          (evt.target as HTMLElement)?.tagName === "INPUT" &&
+          (evt.target as HTMLInputElement).type === "text"
+        ) &&
+        (evt.target as HTMLElement)?.tagName !== "TEXTAREA"
+      ) {
+        updateFocusPaintedClasses(true);
+      }
+    };
+    const turnFocusPaintingOff = () => updateFocusPaintedClasses(false);
+    document.addEventListener("keydown", turnFocusPaintingOn);
+    document.addEventListener("mousedown", turnFocusPaintingOff);
+
+    focusReactivePaintedStoredData.push({
+      el,
+      turnFocusPaintingOn,
+      turnFocusPaintingOff,
+    });
+  },
+
+  unmounted(el: Element) {
+    // Clean up - remove event listeners and stored data
+    const storedData = focusReactivePaintedStoredData.find(
+      (data) => data.el === el,
+    );
+
+    document.removeEventListener("keydown", storedData.turnFocusPaintingOn);
+    document.removeEventListener("mousedown", storedData.turnFocusPaintingOff);
+
+    focusReactivePaintedStoredData.splice(
+      focusReactivePaintedStoredData.indexOf(storedData),
+      1,
+    );
+  },
+};
 </script>
 
 <template>
-  <div class="layout" :style="{ '--controls-height': controlBarHeight }">
+  <div
+    v-reactive-focus-painted
+    class="layout"
+    :style="{ '--controls-height': controlBarHeight }"
+  >
     <HeaderBar
       v-if="!isSlimMode"
       :title="title"
@@ -309,6 +366,7 @@ const controlBarHeight = computed(() => {
                 v-model="bottomPaneActiveTab"
                 class="scripting-editor-tab-bar"
                 :possible-values="bottomPaneOptions"
+                data-key-focus-paintable
               />
               <div class="console-container">
                 <OutputConsole
@@ -461,5 +519,26 @@ const controlBarHeight = computed(() => {
 
 .scrollable-y {
   overflow-y: auto;
+}
+
+/* Not scoped because we want to force layout of control bar */
+:deep(.controls) {
+  width: 100%;
+  padding: 0;
+  border-top: none;
+  background-color: none;
+}
+
+.scripting-editor-tab-bar.key-focus-painted:focus-within
+  :deep(input[type="radio"]:checked + span::after) {
+  content: "";
+  position: absolute;
+  display: block;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  box-shadow: 0 0 1px 1px var(--knime-cornflower);
+  border-top: 3px solid var(--knime-cornflower);
+  z-index: 1;
 }
 </style>
