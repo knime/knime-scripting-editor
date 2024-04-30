@@ -5,7 +5,12 @@ import { MonacoLSPConnection } from "./lsp/connection";
 import { KnimeMessageReader, KnimeMessageWriter } from "./lsp/knime-io";
 import { consoleHandler } from "@/consoleHandler";
 
-export type NodeSettings = { script: string; scriptUsedFlowVariable?: string };
+export type NodeSettings = {
+  script: string;
+  scriptUsedFlowVariable?: string;
+  columnOutputMode?: "create" | "replace";
+  outputColumn?: string;
+};
 type LanugageServerStatus = { status: "RUNNING" | "ERROR"; message?: string };
 
 // --- HELPER CLASSES ---

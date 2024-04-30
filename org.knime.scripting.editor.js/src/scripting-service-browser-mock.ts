@@ -127,8 +127,15 @@ export const createScriptingServiceMock = (
 
     // Settings and dialog window
     getInitialSettings() {
-      log("Called scriptingService.getInitialSettings");
-      return Promise.resolve(opt.initialSettings ?? { script: "Hello world" });
+      const ret = opt.initialSettings ?? {
+        script: "Hello world",
+        columnOutoutMode: "create",
+        outputColumn: "mock default",
+      };
+
+      log("Called scriptingService.getInitialSettings, returning", ret);
+
+      return Promise.resolve(ret);
     },
     registerSettingsGetterForApply() {
       log("Called scriptingService.registerSettingsGetterForApply");
