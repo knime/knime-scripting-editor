@@ -8,8 +8,6 @@ import { consoleHandler } from "@/consoleHandler";
 export type NodeSettings = {
   script: string;
   scriptUsedFlowVariable?: string;
-  columnOutputMode?: "create" | "replace";
-  outputColumn?: string;
 };
 type LanugageServerStatus = { status: "RUNNING" | "ERROR"; message?: string };
 
