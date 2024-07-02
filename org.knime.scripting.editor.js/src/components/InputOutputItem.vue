@@ -37,14 +37,16 @@ export const INPUT_OUTPUT_DRAG_EVENT_ID = "input_output_drag_event";
 <script setup lang="ts">
 import { useInputOutputSelectionStore } from "@/store/io-selection";
 import Handlebars from "handlebars";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import Collapser from "webapps-common/ui/components/Collapser.vue";
 import { useMultiSelection } from "webapps-common/ui/components/FileExplorer/useMultiSelection";
 import { createDragGhost, removeDragGhost } from "./utils/dragGhost";
 import PortIcon from "webapps-common/ui/components/node/PortIcon.vue";
 import EyeIcon from "webapps-common/ui/assets/img/icons/eye.svg";
+import { getScriptingService } from "@/scripting-service";
 
 const INITIALLY_EXPANDED_MAX_SUBITEMS = 15;
+const interactive = ref(false);
 
 const props = defineProps<{
   inputOutputItem: InputOutputModel;
@@ -69,6 +71,14 @@ const subItemCodeAliasTemplate = Handlebars.compile(
 );
 
 const inputOutputSelectionStore = useInputOutputSelectionStore();
+
+onMounted(() => {
+  getScriptingService()
+    .getInitialSettings()
+    .then((settings) => {
+      interactive.value = typeof settings.scriptUsedFlowVariable !== "string";
+    });
+});
 
 // Reset selection if another item is selected
 watch(
@@ -119,6 +129,9 @@ const handleClick = (event: MouseEvent, index?: number) => {
 };
 
 const handleSubItemDoubleClick = (event: MouseEvent, index: number) => {
+  if (!interactive.value) {
+    return;
+  }
   const codeToInsert = subItemCodeAliasTemplate({
     subItems: [props.inputOutputItem.subItems?.[index]?.name],
   });
@@ -131,6 +144,9 @@ const handleSubItemDoubleClick = (event: MouseEvent, index: number) => {
 };
 
 const handleHeaderDoubleClick = (event: MouseEvent) => {
+  if (!interactive.value) {
+    return;
+  }
   // Only do something if we have a defined code alias
   if (props.inputOutputItem.codeAlias) {
     const codeToInsert = props.inputOutputItem.codeAlias;
@@ -151,6 +167,10 @@ const getSubItemCodeToInsert = () => {
 };
 
 const onSubItemDragStart = (event: DragEvent, index: number) => {
+  if (!interactive.value) {
+    return;
+  }
+
   inputOutputSelectionStore.selectedItem = props.inputOutputItem;
 
   if (!multiSelection.isSelected(index)) {
@@ -179,6 +199,9 @@ const onSubItemDragEnd = () => {
 
 const isDraggingHeader = ref(false);
 const onHeaderDragStart = (event: DragEvent, codeAlias: string) => {
+  if (!interactive.value) {
+    return;
+  }
   isDraggingHeader.value = true;
   const dragGhost = createDragGhost({
     width: "auto",
@@ -227,7 +250,7 @@ const onHeaderDragEnd = () => {
             'code-alias-dragging': isDraggingHeader,
             'code-alias-not-dragging': !isDraggingHeader,
           }"
-          :draggable="true"
+          :draggable="interactive"
           @mousedown="(event) => handleClick(event)"
           @dblclick="handleHeaderDoubleClick($event)"
           @dragstart="
@@ -250,7 +273,9 @@ const onHeaderDragEnd = () => {
             props.inputOutputItem.subItemCodeAliasTemplate &&
             multiSelection.isSelected(index),
         }"
-        :draggable="Boolean(props.inputOutputItem.subItemCodeAliasTemplate)"
+        :draggable="
+          Boolean(props.inputOutputItem.subItemCodeAliasTemplate) && interactive
+        "
         @dragstart="(event) => onSubItemDragStart(event, index)"
         @dragend="onSubItemDragEnd"
         @click="(event) => handleClick(event, index)"
@@ -281,7 +306,7 @@ const onHeaderDragEnd = () => {
         'code-alias-dragging': isDraggingHeader,
         'code-alias-not-dragging': !isDraggingHeader,
       }"
-      :draggable="true"
+      :draggable="interactive"
       @mousedown="(event) => handleClick(event)"
       @dragstart="
         (event) => onHeaderDragStart(event, inputOutputItem.codeAlias!)

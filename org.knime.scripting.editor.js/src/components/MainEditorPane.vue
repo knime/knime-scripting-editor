@@ -29,12 +29,15 @@ onMounted(() => {
   getScriptingService()
     .getInitialSettings()
     .then((settings) => {
+      const readOnly = typeof settings.scriptUsedFlowVariable === "string";
       codeEditorState.setInitialText(settings.script);
       codeEditorState.editor.value?.updateOptions({
-        readOnly: typeof settings.scriptUsedFlowVariable === "string",
+        readOnly,
         readOnlyMessage: {
           value: `Read-Only-Mode: The script is set by the flow variable '${settings.scriptUsedFlowVariable}'.`,
         },
+        dragAndDrop: !readOnly,
+        dropIntoEditor: { enabled: !readOnly },
       });
     });
 });
