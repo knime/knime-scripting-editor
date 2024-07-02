@@ -247,8 +247,9 @@ const onHeaderDragEnd = () => {
           v-if="inputOutputItem.codeAlias"
           class="code-alias"
           :class="{
-            'code-alias-dragging': isDraggingHeader,
-            'code-alias-not-dragging': !isDraggingHeader,
+            'code-alias-dragging': isDraggingHeader && interactive,
+            'code-alias-not-dragging': !isDraggingHeader && interactive,
+            disabled: !interactive,
           }"
           :draggable="interactive"
           @mousedown="(event) => handleClick(event)"
@@ -268,10 +269,12 @@ const onHeaderDragEnd = () => {
         :key="index"
         class="sub-item"
         :class="{
-          'clickable-sub-item': props.inputOutputItem.subItemCodeAliasTemplate,
+          'clickable-sub-item':
+            props.inputOutputItem.subItemCodeAliasTemplate && interactive,
           selected:
             props.inputOutputItem.subItemCodeAliasTemplate &&
-            multiSelection.isSelected(index),
+            multiSelection.isSelected(index) &&
+            interactive,
         }"
         :draggable="
           Boolean(props.inputOutputItem.subItemCodeAliasTemplate) && interactive
@@ -303,8 +306,9 @@ const onHeaderDragEnd = () => {
       v-if="inputOutputItem.codeAlias"
       class="code-alias"
       :class="{
-        'code-alias-dragging': isDraggingHeader,
-        'code-alias-not-dragging': !isDraggingHeader,
+        'code-alias-dragging': isDraggingHeader && interactive,
+        'code-alias-not-dragging': !isDraggingHeader && interactive,
+        disabled: !interactive,
       }"
       :draggable="interactive"
       @mousedown="(event) => handleClick(event)"
@@ -425,6 +429,18 @@ const onHeaderDragEnd = () => {
 
   &:active {
     cursor: grabbing;
+  }
+}
+
+.code-alias.disabled {
+  cursor: default;
+
+  &:hover {
+    box-shadow: none;
+  }
+
+  &:active {
+    cursor: default;
   }
 }
 
