@@ -18,7 +18,6 @@ definitions:
           - docker # used by sonar pipes
         size: 2x # more memory to accomodate docker container for sonarcloud
         script:
-          - git submodule update --init --recursive
           - cd org.knime.scripting.editor.js
           - npm ci
           - npm run type-check
