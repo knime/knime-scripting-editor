@@ -29,6 +29,7 @@ export type InputOutputModel = {
   subItems?: {
     name: string;
     type: string;
+    supported: boolean;
   }[];
 };
 export const INPUT_OUTPUT_DRAG_EVENT_ID = "input_output_drag_event";
@@ -247,6 +248,7 @@ const onHeaderDragEnd = () => {
           selected:
             props.inputOutputItem.subItemCodeAliasTemplate &&
             multiSelection.isSelected(index),
+          disabled: !subItem.supported,
         }"
         :draggable="Boolean(props.inputOutputItem.subItemCodeAliasTemplate)"
         @dragstart="(event) => onSubItemDragStart(event, index)"
@@ -360,6 +362,11 @@ const onHeaderDragEnd = () => {
   height: 22px;
   line-height: 18px;
   align-items: center;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .selected {
