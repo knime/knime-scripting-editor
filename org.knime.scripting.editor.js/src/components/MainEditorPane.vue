@@ -8,11 +8,13 @@ interface Props {
   showControlBar: boolean;
   language: string;
   fileName: string;
+  readonly?: boolean;
   toSettings?: (settings: NodeSettings) => NodeSettings;
   dropEventHandler?: (event: DragEvent) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  readonly: false,
   toSettings: (settings: NodeSettings) => settings,
   dropEventHandler: () => {},
 });
@@ -23,6 +25,7 @@ const codeEditorState = useMainCodeEditor({
   container: editorRef,
   fileName: props.fileName,
   language: props.language,
+  readonly: props.readonly,
 });
 
 onMounted(() => {
@@ -63,7 +66,11 @@ getScriptingService().registerSettingsGetterForApply(() =>
 
 <template>
   <div class="editor-container">
-    <div ref="editorRef" class="code-editor" @drop="dropEventHandler" />
+    <div
+      ref="editorRef"
+      class="code-editor"
+      @drop="readonly ? $event.preventDefault() : dropEventHandler($event)"
+    />
   </div>
 </template>
 

@@ -24,6 +24,7 @@ type ContainerParams = {
 
 export type UseCodeEditorParams = ContainerParams & {
   hideOverviewRulerLanes?: boolean;
+  readonly?: boolean;
 } & (
     | {
         language: string;
@@ -212,7 +213,11 @@ const createDisposeFn = (
 const createInsertColumnReferenceFunction = (
   editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>,
 ) => {
-  return (textToInsert: string, requiredImport?: string) => {
+  return (textToInsert: string, requiredImport?: string, overrideReadOnly?: boolean) => {
+    if (!overrideReadOnly && editor.value?.getOption(monaco.editor.EditorOption.readOnly)) {
+      return;
+    }
+
     // Start with an edit that inserts the text at the current cursor position
     // replacing the current selection if there is one
     const requiredEdits = [] as monaco.editor.IIdentifiedSingleEditOperation[];
@@ -243,7 +248,11 @@ const createInsertColumnReferenceFunction = (
 const createInsertTextFunction = (
   editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>,
 ) => {
-  return (textToInsert: string) => {
+  return (textToInsert: string, overrideReadOnly?: boolean) => {
+    if (!overrideReadOnly && editor.value?.getOption(monaco.editor.EditorOption.readOnly)) {
+      return;
+    }
+
     // Inserts the text at the current cursor position
     // replacing the current selection if there is one
     const requiredEdits = [
@@ -264,7 +273,11 @@ const createInsertTextFunction = (
 const createInsertFunctionReferenceFunction = (
   editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>,
 ) => {
-  return (functionName: string, args: string[] | null) => {
+  return (functionName: string, args: string[] | null, overrideReadOnly?: boolean) => {
+    if (!overrideReadOnly && editor.value?.getOption(monaco.editor.EditorOption.readOnly)) {
+      return;
+    }
+
     const snippetController = editor.value?.getContribution(
       "snippetController2",
     ) as any; // The Monaco API doesn't expose the type for us :(
@@ -300,6 +313,12 @@ export const useCodeEditor = (
       overviewRulerLanes: params.hideOverviewRulerLanes
         ? 0
         : DEFAULT_OVERVIEW_RULER_LANES,
+      readOnly: params.readonly,
+      domReadOnly: params.readonly,
+      dragAndDrop: !params.readonly,
+      dropIntoEditor: {
+        enabled: !params.readonly,
+      },
       ...EDITOR_OPTIONS,
     });
 
