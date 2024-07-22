@@ -44,9 +44,14 @@ import EyeIcon from "@knime/styles/img/icons/eye.svg";
 
 const INITIALLY_EXPANDED_MAX_SUBITEMS = 15;
 
-const props = defineProps<{
+type PropType = {
   inputOutputItem: InputOutputModel;
-}>();
+  readonly?: boolean;
+};
+
+const props = withDefaults(defineProps<PropType>(), {
+  readonly: false,
+});
 
 const emit = defineEmits(["input-output-item-clicked"]);
 
@@ -71,7 +76,7 @@ const inputOutputSelectionStore = useInputOutputSelectionStore();
 // Reset selection if another item is selected
 watch(
   () => inputOutputSelectionStore.selectedItem,
-  (newItem, oldItem) => {
+  (newItem) => {
     if (newItem !== props.inputOutputItem) {
       multiSelection.resetSelection();
     }
@@ -224,8 +229,9 @@ const onHeaderDragEnd = () => {
           :class="{
             'code-alias-dragging': isDraggingHeader,
             'code-alias-not-dragging': !isDraggingHeader,
+            readonly: readonly,
           }"
-          :draggable="true"
+          :draggable="!readonly"
           @mousedown="(event) => handleClick(event)"
           @dblclick="handleHeaderDoubleClick($event)"
           @dragstart="
@@ -247,8 +253,11 @@ const onHeaderDragEnd = () => {
           selected:
             props.inputOutputItem.subItemCodeAliasTemplate &&
             multiSelection.isSelected(index),
+          readonly: readonly,
         }"
-        :draggable="Boolean(props.inputOutputItem.subItemCodeAliasTemplate)"
+        :draggable="
+          Boolean(inputOutputItem.subItemCodeAliasTemplate && !readonly)
+        "
         @dragstart="(event) => onSubItemDragStart(event, index)"
         @dragend="onSubItemDragEnd"
         @click="(event) => handleClick(event, index)"
@@ -278,8 +287,9 @@ const onHeaderDragEnd = () => {
       :class="{
         'code-alias-dragging': isDraggingHeader,
         'code-alias-not-dragging': !isDraggingHeader,
+        readonly: readonly,
       }"
-      :draggable="true"
+      :draggable="!readonly"
       @mousedown="(event) => handleClick(event)"
       @dragstart="
         (event) => onHeaderDragStart(event, inputOutputItem.codeAlias!)
@@ -333,6 +343,11 @@ const onHeaderDragEnd = () => {
 
 .subitem-type {
   font-style: italic;
+}
+
+.readonly {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .title {

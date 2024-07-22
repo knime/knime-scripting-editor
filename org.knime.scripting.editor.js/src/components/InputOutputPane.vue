@@ -10,6 +10,13 @@ import { useMainCodeEditorStore } from "@/editor";
 import useShouldFocusBePainted from "./utils/shouldFocusBePainted";
 import * as monaco from "monaco-editor";
 
+type PropType = {
+  readonly?: boolean;
+};
+withDefaults(defineProps<PropType>(), {
+  readonly: false,
+});
+
 const emit = defineEmits<{
   "drop-event-handler-created": [
     dropEventHandler: (payload: DragEvent) => void,
@@ -156,6 +163,7 @@ const handleOnClick = (
       :key="inputOutputItem.name"
       ref="selectableItems"
       v-remove-from-tab-flow
+      :readonly="readonly"
       :input-output-item="inputOutputItem"
       :class="{
         'keyboard-selected': i === selectedItemIndex,

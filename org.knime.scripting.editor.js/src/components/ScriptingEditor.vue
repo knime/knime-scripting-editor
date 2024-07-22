@@ -48,6 +48,7 @@ interface Props {
   rightPaneMinimumWidthInPixel?: number;
   toSettings?: (settings: NodeSettings) => NodeSettings;
   showOutputTable?: boolean;
+  readonly?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,6 +65,7 @@ const props = withDefaults(defineProps<Props>(), {
   rightPaneMinimumWidthInPixel: () => 0,
   toSettings: (settings: NodeSettings) => settings,
   showOutputTable: false,
+  readonly: false,
 });
 
 const isRightPaneCollapsable = computed(
@@ -330,6 +332,7 @@ const paintFocus = useShouldFocusBePainted();
         class="scrollable-y"
       >
         <InputOutputPane
+          :readonly="readonly"
           @drop-event-handler-created="onDropEventHandlerCreated"
           @input-output-item-insertion="onInputOutputItemInsertion"
         />
@@ -392,6 +395,7 @@ const paintFocus = useShouldFocusBePainted();
                         :show-control-bar="showControlBarDynamic"
                         :drop-event-handler="dropEventHandler"
                         :to-settings="props.toSettings"
+                        :readonly="readonly"
                       />
                     </template>
                     <div class="run-button-panel">
