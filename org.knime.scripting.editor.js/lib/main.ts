@@ -25,8 +25,11 @@ import editor from "@/editor";
 import { consoleHandler } from "@/consoleHandler";
 import {
   getScriptingService,
-  type NodeSettings,
+  type GenericInitialData,
+  type GenericNodeSettings,
   type ScriptingServiceType,
+  type KAIConfig,
+  type PortConfigs,
 } from "@/scripting-service";
 import { setActiveEditorStoreForAi } from "@/store/ai-bar";
 import {
@@ -34,6 +37,10 @@ import {
   type InsertionEvent,
 } from "@/components/utils/insertionEventHelper";
 import OutputTablePreview from "@/components/OutputTablePreview.vue";
+import {
+  getInitialDataService,
+  type InitialDataServiceType,
+} from "@/initial-data-service";
 
 export {
   CompactTabBar,
@@ -49,11 +56,14 @@ export {
   MIN_WIDTH_FOR_DISPLAYING_LEFT_PANE,
   COLUMN_INSERTION_EVENT,
   insertionEventHelper,
+  getInitialDataService,
 };
 export type {
   ConsoleHandler,
   ConsoleText,
-  NodeSettings,
+  GenericInitialData,
+  GenericNodeSettings,
+  InitialDataServiceType,
   InputOutputModel,
   ScriptingServiceType,
   SettingsMenuItem,
@@ -62,4 +72,6 @@ export type {
   UseDiffEditorParams,
   UseDiffEditorReturn,
   InsertionEvent,
+  KAIConfig,
+  PortConfigs,
 };

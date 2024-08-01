@@ -1,7 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoadingIcon } from "@knime/components";
-
+import { DEFAULT_INITIAL_DATA } from "@/scripting-service-browser-mock";
 import { getScriptingService } from "@/scripting-service";
 import {
   clearPromptResponseStore,
@@ -10,38 +10,22 @@ import {
 } from "@/store/ai-bar";
 import AiBar from "../AiBar.vue";
 import AiSuggestion from "../AiSuggestion.vue";
+import { getInitialDataService } from "@/initial-data-service";
 import { ref } from "vue";
 
 vi.mock("@/scripting-service");
 vi.mock("@/editor");
+vi.mock("@/initial-data-service", () => ({
+  getInitialDataService: vi.fn(() => ({
+    getInitialData: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_DATA)),
+    isInitialDataLoaded: vi.fn(() => true),
+  })),
+}));
 
 describe("AiBar", () => {
-  const mockSendToService = (
-    isLoggedIn = true,
-    hubId = "My special KNIME Hub",
-  ) => {
-    return (method: string) => {
-      if (method === "isLoggedIn") {
-        return Promise.resolve(isLoggedIn);
-      } else if (method === "getHubId") {
-        return Promise.resolve(hubId);
-      } else if (method === "abortSuggestCodeRequest") {
-        return Promise.resolve();
-      }
-      throw new Error(`Unknown scripting service method '${method}' called`);
-    };
-  };
-
   beforeEach(() => {
+    vi.resetModules();
     clearPromptResponseStore();
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockImplementation(() => {
-      return Promise.resolve(true);
-    });
-    vi.mocked(getScriptingService().sendToService).mockImplementation(
-      mockSendToService(),
-    );
     setActiveEditorStoreForAi({
       text: ref(""),
       editorModel: "myEditorModel",
@@ -49,7 +33,7 @@ describe("AiBar", () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("renders chat controls if no prompt is active", async () => {
@@ -149,14 +133,6 @@ describe("AiBar", () => {
   });
 
   it("show disclaimer on first startup", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockImplementation(() => {
-      return Promise.resolve(true);
-    });
-    vi.mocked(getScriptingService().sendToService).mockReturnValue(
-      Promise.resolve(true), // logged in = true
-    );
     const bar = mount(AiBar);
     await flushPromises();
     (bar.vm as any).showDisclaimer = true;
@@ -166,51 +142,83 @@ describe("AiBar", () => {
   });
 
   it("show login button if not logged in yet", async () => {
-    vi.mocked(getScriptingService().sendToService).mockImplementation(
-      mockSendToService(false),
-    );
+    vi.mocked(getInitialDataService).mockReturnValue({
+      getInitialData: vi.fn(() =>
+        Promise.resolve({
+          ...DEFAULT_INITIAL_DATA,
+          kAiConfig: {
+            ...DEFAULT_INITIAL_DATA.kAiConfig,
+            loggedIn: false,
+          },
+        }),
+      ),
+      isInitialDataLoaded: vi.fn(() => true),
+    });
+
     const bar = mount(AiBar);
     await flushPromises();
+
     const downloadNotification = bar.findAll(".notification-bar").at(0);
     const loginNotification = bar.findAll(".notification-bar").at(1);
+
     expect(downloadNotification?.exists()).toBeTruthy();
     expect(loginNotification?.exists()).toBeTruthy();
     expect(downloadNotification?.isVisible()).toBeFalsy();
     expect(loginNotification?.isVisible()).toBeTruthy();
 
     const loginButton = loginNotification?.find(".notification-button");
+
     expect(loginButton?.exists()).toBeTruthy();
-    expect(loginButton?.text()).toBe("Login to My special KNIME Hub");
+    expect(loginButton?.text()).toBe(
+      `Login to ${DEFAULT_INITIAL_DATA.kAiConfig.hubId}`,
+    );
   });
 
   it("show install button if not available", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockReturnValueOnce(Promise.resolve(false));
+    vi.mocked(getInitialDataService).mockReturnValue({
+      getInitialData: vi.fn(() =>
+        Promise.resolve({
+          ...DEFAULT_INITIAL_DATA,
+          kAiConfig: {
+            ...DEFAULT_INITIAL_DATA.kAiConfig,
+            codeAssistantInstalled: false,
+          },
+        }),
+      ),
+      isInitialDataLoaded: vi.fn(() => true),
+    });
+
     const bar = mount(AiBar);
     await flushPromises();
+
     const downloadNotification = bar.findAll(".notification-bar").at(0);
     const loginNotification = bar.findAll(".notification-bar").at(1);
+
     expect(downloadNotification?.exists()).toBeTruthy();
     expect(loginNotification?.exists()).toBeTruthy();
     expect(downloadNotification?.isVisible()).toBeTruthy();
     expect(loginNotification?.isVisible()).toBeFalsy();
 
     const downloadButton = downloadNotification?.find(".notification-button");
+
     expect(downloadButton?.exists()).toBeTruthy();
     expect(downloadButton?.text()).toBe("Download from KNIME Hub");
   });
 
   it("show flow variable message if readonly", async () => {
-    vi.mocked(
-      getScriptingService().isCodeAssistantInstalled,
-    ).mockReturnValueOnce(Promise.resolve(true));
-    vi.mocked(getScriptingService().getInitialSettings).mockReturnValueOnce(
-      Promise.resolve({
-        script: "my script",
-        scriptUsedFlowVariable: "myVar",
-      }),
-    );
+    vi.mocked(getInitialDataService).mockReturnValue({
+      getInitialData: vi.fn(() =>
+        Promise.resolve({
+          ...DEFAULT_INITIAL_DATA,
+          settings: {
+            ...DEFAULT_INITIAL_DATA.settings,
+            scriptUsedFlowVariable: true,
+          },
+        }),
+      ),
+      isInitialDataLoaded: vi.fn(() => true),
+    });
+
     const bar = mount(AiBar);
     await flushPromises();
     const downloadNotification = bar.findAll(".notification-bar").at(0);

@@ -12,8 +12,11 @@ import AbortIcon from "@knime/styles/img/icons/cancel-execution.svg";
 import LinkIcon from "@knime/styles/img/icons/link.svg";
 import SendIcon from "@knime/styles/img/icons/paper-flier.svg";
 import { Button, FunctionButton, LoadingIcon } from "@knime/components";
-
-import { getScriptingService } from "@/scripting-service";
+import {
+  getScriptingService,
+  type GenericInitialData,
+} from "@/scripting-service";
+import { getInitialDataService } from "@/initial-data-service";
 import {
   activeEditorStore,
   clearPromptResponseStore,
@@ -148,13 +151,13 @@ const aiBarWidth = computed(() => {
 });
 
 onMounted(async () => {
-  if (!(await getScriptingService().isCodeAssistantInstalled())) {
+  const initialSettings = await getInitialDataService().getInitialData();
+
+  if (!initialSettings.kAiConfig.codeAssistantInstalled) {
     status.value = "uninstalled";
-  } else if (
-    (await getScriptingService().getInitialSettings()).scriptUsedFlowVariable
-  ) {
+  } else if (initialSettings.settings.scriptUsedFlowVariable) {
     status.value = "readonly";
-  } else if (!(await getScriptingService().sendToService("isLoggedIn"))) {
+  } else if (!initialSettings.kAiConfig.loggedIn) {
     status.value = "unauthorized";
   }
 });
@@ -174,7 +177,7 @@ const handleLoginStatus = (loginStatus: boolean) => {
 scriptingService.registerEventHandler("hubLogin", handleLoginStatus);
 
 const tryLogin = () => {
-  getScriptingService().sendToService("loginToHub");
+  scriptingService.sendToService("loginToHub");
 };
 
 // used to add a divider between notification bar / chat controls and above
@@ -190,11 +193,16 @@ const hasTopContent = computed(() => {
 // The id of the hub is used to display the name of the hub in the login button
 // Updated with the actual hub id once the scripting service is ready
 const hubId = ref<string>("KNIME Hub");
-scriptingService.sendToService("getHubId").then((id) => {
-  if (id !== null) {
-    hubId.value = id;
-  }
-});
+getInitialDataService()
+  .getInitialData()
+  .then((data: GenericInitialData) => {
+    return data.kAiConfig.hubId;
+  })
+  .then((id) => {
+    if (id !== null) {
+      hubId.value = id;
+    }
+  });
 </script>
 
 <template>

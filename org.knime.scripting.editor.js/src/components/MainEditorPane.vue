@@ -2,20 +2,25 @@
 import { onMounted, ref } from "vue";
 import { useMainCodeEditor } from "@/editor";
 import { onKeyStroke } from "@vueuse/core";
-import { getScriptingService, type NodeSettings } from "@/scripting-service";
+import {
+  getScriptingService,
+  type GenericNodeSettings,
+  type GenericInitialData,
+} from "@/scripting-service";
 import { insertionEventHelper } from "@/components/utils/insertionEventHelper";
 import { COLUMN_INSERTION_EVENT } from "@/components/InputOutputItem.vue";
+import { getInitialDataService } from "@/initial-data-service";
 
 interface Props {
   showControlBar: boolean;
   language: string;
   fileName: string;
-  toSettings?: (settings: NodeSettings) => NodeSettings;
+  toSettings?: (settings: GenericNodeSettings) => GenericNodeSettings;
   dropEventHandler?: (event: DragEvent) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  toSettings: (settings: NodeSettings) => settings,
+  toSettings: (settings: GenericNodeSettings) => settings,
   dropEventHandler: () => {},
 });
 
@@ -34,9 +39,12 @@ insertionEventHelper
   });
 
 onMounted(() => {
-  getScriptingService()
-    .getInitialSettings()
-    .then((settings) => {
+  getInitialDataService()
+    .getInitialData()
+    .then((initialData: GenericInitialData) => {
+      return initialData.settings;
+    })
+    .then((settings: GenericNodeSettings) => {
       codeEditorState.setInitialText(settings.script);
       codeEditorState.editor.value?.updateOptions({
         readOnly: typeof settings.scriptUsedFlowVariable === "string",

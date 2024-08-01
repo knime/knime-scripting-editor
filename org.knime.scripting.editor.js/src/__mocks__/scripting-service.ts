@@ -1,3 +1,5 @@
+import type { ScriptingServiceType } from "@/scripting-service";
+import { DEFAULT_INITIAL_DATA } from "@/scripting-service-browser-mock";
 import { vi } from "vitest";
 
 export const defaultPortConfig = {
@@ -23,23 +25,15 @@ export const defaultPortConfig = {
   ],
 };
 
-export const scriptingServiceMock = {
+export const scriptingServiceMock: ScriptingServiceType = {
   registerEventHandler: vi.fn(),
-  isCodeAssistantEnabled: vi.fn(),
-  isCodeAssistantInstalled: vi.fn(),
-  inputsAvailable: vi.fn(),
-  closeDialog: vi.fn(),
-  getFlowVariableInputs: vi.fn(),
-  getInputObjects: vi.fn(),
-  getOutputObjects: vi.fn(),
-  connectToLanguageServer: vi.fn(),
   sendToService: vi.fn(),
-  getInitialSettings: vi.fn(() =>
-    Promise.resolve({ script: "myInitialScript" }),
-  ),
-  getPortConfigs: vi.fn(() => Promise.resolve(defaultPortConfig)),
+  connectToLanguageServer: vi.fn(),
+  getInitialData: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_DATA)),
   isCallKnimeUiApiAvailable: vi.fn(() => Promise.resolve(true)),
   registerSettingsGetterForApply: vi.fn(),
+  // @ts-expect-error
+  closeDialog: vi.fn(),
 };
 
 export const getScriptingService = vi.fn(() => scriptingServiceMock);

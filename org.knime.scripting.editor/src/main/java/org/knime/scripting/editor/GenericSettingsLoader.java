@@ -44,58 +44,28 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Nov 16, 2023 (benjamin): created
+ *   Jul 30, 2024 (david): created
  */
 package org.knime.scripting.editor;
 
 import java.util.Map;
 
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.webui.node.dialog.NodeAndVariableSettingsRO;
-import org.knime.core.webui.node.dialog.NodeAndVariableSettingsWO;
 import org.knime.core.webui.node.dialog.SettingsType;
 
 /**
- * Generic scripting settings. The setting can be saved to the {@link SettingsType#MODEL model} settings or
- * {@link SettingsType#VIEW view} settings.
+ * Used by the {@link GenericInitialDataService} to supply data to the editor.
  *
- * To be used together with {@link GenericInitialDataService}.
- *
- * @author Benjamin Wilhelm, KNIME GmbH, Berlin, Germany
+ * @author David Hickey, TNG Technology Consulting GmbH
  */
-@SuppressWarnings("restriction") // SettingsType is not yet public API
-public abstract class ScriptingNodeSettings {
-
-    protected final SettingsType m_scriptSettingsType;
+public interface GenericSettingsLoader {
 
     /**
-     * @param scriptSettingsType the type of settings to use for the user script
+     * @param settings
+     * @return
      */
-    public ScriptingNodeSettings(final SettingsType scriptSettingsType) {
-        m_scriptSettingsType = scriptSettingsType;
-    }
+    Map<String, Object> convertNodeSettingsToMap(Map<SettingsType, NodeAndVariableSettingsRO> settings)
+        throws InvalidSettingsException;
 
-    public void saveSettingsTo(final Map<SettingsType, NodeAndVariableSettingsWO> settings) {
-        saveSettingsTo(settings.get(m_scriptSettingsType));
-    }
-
-    public void loadSettingsFrom(final Map<SettingsType, NodeAndVariableSettingsRO> settings)
-        throws InvalidSettingsException {
-
-        loadSettingsFrom(settings.get(m_scriptSettingsType));
-    }
-
-    public void validate(final Map<SettingsType, NodeAndVariableSettingsRO> settings) throws InvalidSettingsException {
-        loadSettingsFrom(settings);
-    }
-
-    public void validate(final NodeSettingsRO settings) throws InvalidSettingsException {
-        loadSettingsFrom(settings);
-    }
-
-    public abstract void saveSettingsTo(final NodeSettingsWO settings);
-
-    public abstract void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException;
 }

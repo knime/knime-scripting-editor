@@ -82,15 +82,6 @@ describe("scripting-service", () => {
   });
 
   describe("settings", () => {
-    it("gets initial data from the JsonDataService", async () => {
-      const initalSettings = await (
-        await getScriptingService()
-      ).getInitialSettings();
-      expect(initalSettings).toEqual({ script: "foo" });
-      expect(_jsonDataService.initialData).toHaveBeenCalledOnce();
-      expect(_jsonDataService.initialData).toHaveBeenCalledWith();
-    });
-
     describe("registerSettingsGetterForApply", () => {
       it("adds listener in DialogService to apply data in JsonDataService", async () => {
         const settings = { script: "myScript" };
@@ -115,26 +106,10 @@ describe("scripting-service", () => {
     });
   });
 
-  describe("input / output objects", () => {
-    it("requests getFlowVariableInputs", async () => {
-      await (await getScriptingService()).getFlowVariableInputs();
-      expect(_jsonDataService.data).toHaveBeenCalledWith({
-        method: "ScriptingService.getFlowVariableInputs",
-      });
-    });
-
-    it("requests getInputObjects", async () => {
-      await (await getScriptingService()).getInputObjects();
-      expect(_jsonDataService.data).toHaveBeenCalledWith({
-        method: "ScriptingService.getInputObjects",
-      });
-    });
-
-    it("requests getOutputObjects", async () => {
-      await (await getScriptingService()).getOutputObjects();
-      expect(_jsonDataService.data).toHaveBeenCalledWith({
-        method: "ScriptingService.getOutputObjects",
-      });
+  describe("initial settings", () => {
+    it("requests initial data", async () => {
+      await (await getScriptingService()).getInitialData();
+      expect(_jsonDataService.initialData).toHaveBeenCalled();
     });
   });
 });

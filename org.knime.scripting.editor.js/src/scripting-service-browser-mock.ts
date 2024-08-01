@@ -1,8 +1,12 @@
 import { sleep } from "@knime/utils";
 import type { InputOutputModel } from "./components/InputOutputItem.vue";
-import type { NodeSettings, ScriptingServiceType } from "./scripting-service";
+import type {
+  GenericInitialData,
+  PortConfigs,
+  ScriptingServiceType,
+} from "./scripting-service";
 
-const DEFAULT_PORT_CONFIGS = {
+const DEFAULT_PORT_CONFIGS: PortConfigs = {
   inputPorts: [
     {
       nodeId: "root",
@@ -92,16 +96,29 @@ export const DEFAULT_FLOW_VARIABLE_INPUTS: InputOutputModel = {
   ],
 };
 
+export const DEFAULT_INITIAL_DATA: GenericInitialData = {
+  inputObjects: DEFAULT_INPUT_OBJECTS,
+  outputObjects: DEFAULT_OUTPUT_OBJECTS,
+  flowVariables: DEFAULT_FLOW_VARIABLE_INPUTS,
+  inputPortConfigs: DEFAULT_PORT_CONFIGS,
+  kAiConfig: {
+    codeAssistantEnabled: true,
+    codeAssistantInstalled: true,
+    hubId: "My Mocked KNIME Hub",
+    loggedIn: true,
+  },
+  inputsAvailable: true,
+  settings: {
+    script: "Hello world (from browser mock)",
+  },
+};
+
 export type ScriptingServiceMockOptions = {
   sendToServiceMockResponses?: Record<
     string,
     (options?: any[]) => Promise<any>
   >;
-  initialSettings?: NodeSettings;
-  inputsAvailable?: boolean;
-  inputObjects?: InputOutputModel[];
-  outputObjects?: InputOutputModel[];
-  flowVariableInputs?: InputOutputModel;
+  initialSettings?: GenericInitialData;
 };
 
 export const createScriptingServiceMock = (
@@ -110,9 +127,10 @@ export const createScriptingServiceMock = (
   eventHandlers: Map<string, (args: any) => void>;
 } => {
   const eventHandlers = new Map<string, (args: any) => void>();
-  const sendToServiceMockResponses = {
-    getHubId: () => Promise.resolve("My Mocked KNIME Hub"),
-    isLoggedIn: () => Promise.resolve(true),
+  const sendToServiceMockResponses: Record<
+    string,
+    (options?: any[]) => Promise<any>
+  > = {
     suggestCode: async () => {
       await sleep(SLEEP_TIME_AI_SUGGESTION);
       const fn = eventHandlers.get("codeSuggestion");
@@ -125,12 +143,14 @@ export const createScriptingServiceMock = (
       return {};
     },
     abortSuggestCodeRequest: () => Promise.resolve(),
-  } as Record<string, (options?: any[]) => Promise<any>>;
+  };
 
   return {
-    async sendToService(methodName: string, options?: any[]) {
+    sendToService(methodName: string, options?: any[]) {
       log(`Called scriptingService.sendToService("${methodName}")`, options);
-      await sleep(SLEEP_TIME_ANY_CALL);
+
+      sleep(SLEEP_TIME_ANY_CALL);
+
       if (
         opt.sendToServiceMockResponses &&
         methodName in opt.sendToServiceMockResponses
@@ -151,50 +171,17 @@ export const createScriptingServiceMock = (
     },
 
     // Settings and dialog window
-    getInitialSettings() {
-      log("Called scriptingService.getInitialSettings");
-      return Promise.resolve(opt.initialSettings ?? { script: "Hello world" });
+    getInitialData() {
+      log("Called scriptingService.getInitialData");
+      return Promise.resolve(opt.initialSettings ?? DEFAULT_INITIAL_DATA);
     },
     registerSettingsGetterForApply() {
       log("Called scriptingService.registerSettingsGetterForApply");
       return Promise.resolve();
     },
 
-    // Input and output objects
-    inputsAvailable() {
-      log("Called scriptingService.inputsAvailable");
-      return Promise.resolve(opt.inputsAvailable ?? true);
-    },
-    getInputObjects() {
-      log("Called scriptingService.getInputObjects");
-      return Promise.resolve(opt.inputObjects ?? DEFAULT_INPUT_OBJECTS);
-    },
-    getOutputObjects() {
-      log("Called scriptingService.getOutputObjects");
-      return Promise.resolve(opt.outputObjects ?? DEFAULT_OUTPUT_OBJECTS);
-    },
-    getFlowVariableInputs() {
-      log("Called scriptingService.getFlowVariableInputs");
-      return Promise.resolve(
-        opt.flowVariableInputs ?? DEFAULT_FLOW_VARIABLE_INPUTS,
-      );
-    },
-    getPortConfigs() {
-      log("Called scriptingService.getPortConfigs");
-      return Promise.resolve(DEFAULT_PORT_CONFIGS);
-    },
     isCallKnimeUiApiAvailable() {
       log("Called scriptingService.isCallKnimeUiApiAvailable");
-      return Promise.resolve(true);
-    },
-
-    // Code assistant
-    isCodeAssistantInstalled() {
-      log("Called scriptingService.isCodeAssistantInstalled");
-      return Promise.resolve(true);
-    },
-    isCodeAssistantEnabled() {
-      log("Called scriptingService.isCodeAssistantEnabled");
       return Promise.resolve(true);
     },
 

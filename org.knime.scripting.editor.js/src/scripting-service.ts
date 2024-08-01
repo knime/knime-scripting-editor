@@ -24,10 +24,28 @@ export type PortConfigs = {
   inputPorts: PortConfig[];
 };
 
-export type NodeSettings = {
-  script: string;
-  scriptUsedFlowVariable?: string | null;
+export type GenericNodeSettings = {
+  [key: string]: any;
 };
+
+export type KAIConfig = {
+  codeAssistantEnabled: boolean;
+  codeAssistantInstalled: boolean;
+  hubId: string;
+  loggedIn: boolean;
+};
+
+export type GenericInitialData = {
+  settings: GenericNodeSettings;
+  inputPortConfigs: PortConfigs;
+  inputObjects: InputOutputModel[];
+  flowVariables: InputOutputModel;
+  inputsAvailable: boolean;
+  outputObjects?: InputOutputModel[];
+  kAiConfig: KAIConfig;
+  [key: string]: any;
+};
+
 type LanugageServerStatus = { status: "RUNNING" | "ERROR"; message?: string };
 
 // --- HELPER CLASSES ---
@@ -133,12 +151,12 @@ class SettingsHelper {
     this.jsonDataService = JsonDataService.getInstance();
   }
 
-  public async getInitialSettings(): Promise<NodeSettings> {
+  public async getInitialData(): Promise<GenericInitialData> {
     return (await this.jsonDataService).initialData();
   }
 
   public async registerApplyListener(
-    settingsGetter: () => NodeSettings,
+    settingsGetter: () => { [key: string]: any },
   ): Promise<void> {
     const dialogService = await DialogService.getInstance();
     dialogService.setApplyListener(async () => {
@@ -192,38 +210,14 @@ const scriptingService = {
     }
   },
 
-  // Code assistant
-  isCodeAssistantEnabled(): Promise<boolean> {
-    return RPCHelper.getInstance().sendToService("isCodeAssistantEnabled");
-  },
-  isCodeAssistantInstalled(): Promise<boolean> {
-    return RPCHelper.getInstance().sendToService("isCodeAssistantInstalled");
-  },
-
-  // Inputs and outputs
-  inputsAvailable(): Promise<boolean> {
-    return RPCHelper.getInstance().sendToService("inputsAvailable");
-  },
-  getFlowVariableInputs(): Promise<InputOutputModel> {
-    return RPCHelper.getInstance().sendToService("getFlowVariableInputs");
-  },
-  getInputObjects(): Promise<InputOutputModel[]> {
-    return RPCHelper.getInstance().sendToService("getInputObjects");
-  },
-  getOutputObjects(): Promise<InputOutputModel[]> {
-    return RPCHelper.getInstance().sendToService("getOutputObjects");
-  },
-  getPortConfigs(): Promise<PortConfigs> {
-    return RPCHelper.getInstance().sendToService("getInputPortConfigs");
-  },
   isCallKnimeUiApiAvailable(portToTestFor: PortConfig) {
     return RPCHelper.getInstance().isCallKnimeUiApiAvailable(portToTestFor);
   },
 
   // Settings
-  getInitialSettings: () => SettingsHelper.getInstance().getInitialSettings(),
+  getInitialData: () => SettingsHelper.getInstance().getInitialData(),
 
-  registerSettingsGetterForApply: (settingsGetter: () => NodeSettings) =>
+  registerSettingsGetterForApply: (settingsGetter: () => GenericNodeSettings) =>
     SettingsHelper.getInstance().registerApplyListener(settingsGetter),
 };
 

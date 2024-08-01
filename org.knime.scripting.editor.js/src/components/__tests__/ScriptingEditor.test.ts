@@ -21,6 +21,7 @@ import {
 } from "../utils/paneSizes";
 import MainEditorPane from "../MainEditorPane.vue";
 import ScriptingEditorBottomPane from "../ScriptingEditorBottomPane.vue";
+import { DEFAULT_INITIAL_DATA } from "@/scripting-service-browser-mock";
 
 const mocks = vi.hoisted(() => {
   return {
@@ -418,7 +419,9 @@ describe("ScriptingEditor", () => {
     const settingsGetter = (
       getScriptingService().registerSettingsGetterForApply as any
     ).mock.calls[0][0];
-    expect(settingsGetter()).toStrictEqual({ script: "myInitialScript" });
+    expect(settingsGetter()).toStrictEqual({
+      script: DEFAULT_INITIAL_DATA.settings.script,
+    });
   });
 
   it("registers settings getter using toSettings prop", () => {
@@ -429,7 +432,9 @@ describe("ScriptingEditor", () => {
       getScriptingService().registerSettingsGetterForApply as any
     ).mock.calls[0][0];
     expect(settingsGetter()).toBe(settings);
-    expect(toSettings).toHaveBeenCalledWith({ script: "myInitialScript" });
+    expect(toSettings).toHaveBeenCalledWith({
+      script: DEFAULT_INITIAL_DATA.settings.script,
+    });
   });
 
   it("sets console handler store on console-created", async () => {
