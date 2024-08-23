@@ -18,11 +18,7 @@ const enableAiButton = ref<boolean>(false);
 const props = defineProps({
   currentPaneSizes: {
     type: Object as PropType<PaneSizes>,
-    default: () => ({ left: 20, right: 25, bottom: 30 }),
-  },
-  language: {
-    type: String,
-    default: null,
+    required: true,
   },
   showButtonText: {
     type: Boolean,
@@ -57,33 +53,30 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="showBar" class="ai-bar">
+  <div class="controls">
     <AiBar
       ref="aiBar"
       :current-pane-sizes="props.currentPaneSizes"
-      :language="language"
       @accept-suggestion="showBar = false"
-      @close-ai-bar="showBar = false"
-    />
-  </div>
-  <div class="controls">
-    <div>
-      <Button
-        v-if="showAiButton"
-        ref="aiButton"
-        :disabled="!enableAiButton"
-        compact
-        :with-border="true"
-        class="ai-button"
-        :class="{
-          'button-active': showBar,
-          'hide-button-text': !showButtonText,
-        }"
-        @click="showBar = !showBar"
-      >
-        <AiCode viewBox="0 0 32 32" /> {{ showButtonText ? "Ask K-AI" : "" }}
-      </Button>
-    </div>
+    >
+      <template #ai-button="{ toggleAiBar }">
+        <Button
+          v-if="showAiButton"
+          ref="aiButton"
+          :disabled="!enableAiButton"
+          compact
+          :with-border="true"
+          class="ai-button"
+          :class="{
+            'button-active': showBar,
+            'hide-button-text': !showButtonText,
+          }"
+          @click="toggleAiBar"
+        >
+          <AiCode viewBox="0 0 32 32" /> {{ showButtonText ? "Ask K-AI" : "" }}
+        </Button>
+      </template>
+    </AiBar>
     <div class="button-controls">
       <slot name="controls" />
     </div>

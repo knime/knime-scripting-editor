@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTextareaAutosize } from "@vueuse/core";
+import { onClickOutside, useTextareaAutosize } from "@vueuse/core";
 import {
   computed,
   nextTick,
@@ -11,7 +11,8 @@ import {
 import AbortIcon from "@knime/styles/img/icons/cancel-execution.svg";
 import LinkIcon from "@knime/styles/img/icons/link.svg";
 import SendIcon from "@knime/styles/img/icons/paper-flier.svg";
-import { Button, FunctionButton, LoadingIcon } from "@knime/components";
+import { Button, FunctionButton } from "@knime/components";
+import InfinityLoadingBar from "@/components/InfinityLoadingBar.vue";
 import { getScriptingService } from "@/scripting-service";
 import {
   getInitialDataService,
@@ -38,28 +39,14 @@ type Status =
   | "unauthorized"
   | "readonly";
 
-// sizes in viewport width/height
-const DEFAULT_AI_BAR_WIDTH = 65;
-const DEFAULT_AI_BAR_HEIGHT = 40;
-const DEFAULT_LEFT_OVERFLOW = 10;
-
 const { textarea, input } = useTextareaAutosize();
 
 const props = defineProps({
   currentPaneSizes: {
     type: Object as PropType<PaneSizes>,
-    default: () => ({ left: 20, right: 25, bottom: 30 }),
-  },
-  language: {
-    type: String,
-    default: null,
+    required: true,
   },
 });
-
-const emit = defineEmits<{
-  (e: "accept-suggestion"): void;
-  (e: "close-ai-bar"): void;
-}>();
 
 const promptResponseStore: PromptResponseStore = usePromptResponseStore();
 const status = ref<Status>("idle" as Status);
@@ -67,7 +54,6 @@ let message: Message | null =
   promptResponseStore.promptResponse?.message ?? null;
 let history: Array<Message | null> = [];
 const scriptingService = getScriptingService();
-const mouseOverLoadingSpinner = ref(false);
 
 const abortRequest = () => {
   scriptingService?.sendToService("abortSuggestCodeRequest");
@@ -100,15 +86,8 @@ const handleCodeSuggestion = (codeSuggestion: CodeSuggestion) => {
     input.value = "";
   }
   nextTick(() => {
-    textarea.value.focus();
+    textarea.value?.focus();
   });
-};
-const acceptSuggestion = (acceptedCode: string) => {
-  history.push(message);
-  status.value = "idle";
-  activeEditorStore.value!.text.value = acceptedCode;
-  clearPromptResponseStore();
-  emit("accept-suggestion");
 };
 
 scriptingService.registerEventHandler("codeSuggestion", handleCodeSuggestion);
@@ -135,21 +114,41 @@ const handleKeyDown = (e: KeyboardEvent) => {
     input.value = history.length ? history[history.length - 1]!.content : "";
   }
 };
-const leftPosition = computed(() =>
-  Math.max(props.currentPaneSizes.left - DEFAULT_LEFT_OVERFLOW, 0),
+const leftSplitterPosition = computed(() =>
+  Math.max(props.currentPaneSizes.left, 0),
 );
-const leftOverflow = computed(
-  () => props.currentPaneSizes.left - leftPosition.value,
-);
-const bottomPosition = computed(
-  () =>
-    // (100vh - 98px) * bottomPaneSize = actual size of bottom pane (49 px is size of controls)
-    // + 2*49px offset (footer and control bar)
-    `calc( ((100vh - 98px) * ${props.currentPaneSizes.bottom / 100}) + 98px )`,
-);
-const aiBarWidth = computed(() => {
-  return Math.min(DEFAULT_AI_BAR_WIDTH, 100 - leftPosition.value);
+
+const showAiBarPopup = defineModel<boolean>("showAiBarContainer", {
+  default: false,
 });
+const aiBarPopupRef = ref<HTMLDivElement | null>(null);
+const slottedContentContainerRef = ref<HTMLButtonElement | null>(null);
+
+const toggleAiBar = () => {
+  showAiBarPopup.value = !showAiBarPopup.value;
+};
+
+const acceptSuggestion = (acceptedCode: string) => {
+  history.push(message);
+  status.value = "idle";
+  activeEditorStore.value!.text.value = acceptedCode;
+  clearPromptResponseStore();
+
+  showAiBarPopup.value = false;
+};
+
+const setupOnClickOutside = () => {
+  const splitters = [...document.querySelectorAll(".splitpanes__splitter")].map(
+    (splitter) => splitter as HTMLElement,
+  );
+  onClickOutside(
+    aiBarPopupRef,
+    () => {
+      showAiBarPopup.value = false;
+    },
+    { ignore: [slottedContentContainerRef, ...splitters] },
+  );
+};
 
 onMounted(async () => {
   const settings = await getSettingsService().getSettings();
@@ -162,6 +161,10 @@ onMounted(async () => {
   } else if (!(await getScriptingService().isLoggedIntoHub())) {
     status.value = "unauthorized";
   }
+
+  await nextTick();
+
+  setupOnClickOutside();
 });
 
 onUnmounted(() => {
@@ -206,147 +209,149 @@ getInitialDataService()
 </script>
 
 <template>
-  <div
-    class="ai-bar-container"
-    :style="{
-      bottom: `${bottomPosition}`,
-      left: `${leftPosition}vw`,
-      width: `${aiBarWidth}vw`,
-      height: `${DEFAULT_AI_BAR_HEIGHT}`,
-      ...(promptResponseStore.promptResponse ? {} : { 'max-width': '800px' }),
-    }"
-  >
+  <div class="everything">
     <div
-      v-show="status === 'uninstalled'"
-      class="notification-bar"
-      :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
+      v-if="showAiBarPopup"
+      ref="aiBarPopupRef"
+      class="ai-bar-popup"
+      data-testid="ai-bar-popup"
+      :style="{
+        '--left-splitter-position': `${leftSplitterPosition}vw`,
+      }"
     >
-      <span class="notification">
-        To start generating code with our AI assistant, install the
-        <i>KNIME AI Assistant</i> extension
-      </span>
-      <Button
-        compact
-        primary
-        :to="'https://hub.knime.com/knime/extensions/org.knime.features.ai.assistant/latest'"
-        class="notification-button"
-      >
-        <LinkIcon />Download from KNIME Hub
-      </Button>
-    </div>
-    <div
-      v-show="status === 'unauthorized'"
-      class="notification-bar"
-      :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
-    >
-      <span class="notification">
-        To start generating code with our AI assistant, please log into your
-        <i>KNIME Hub</i> account
-      </span>
-      <Button compact primary class="notification-button" @click="tryLogin()">
-        Login to {{ hubId }}
-      </Button>
-    </div>
-    <div
-      v-show="status === 'readonly'"
-      class="notification-bar"
-      :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
-    >
-      <span class="notification">
-        Script is overwritten by a flow variable.
-      </span>
-    </div>
-    <div
-      v-show="
-        status !== 'uninstalled' &&
-        status !== 'unauthorized' &&
-        status !== 'readonly'
-      "
-    >
-      <Transition name="disclaimer-slide-fade">
-        <div v-if="showDisclaimer" class="disclaimer-container">
-          <div class="disclaimer-text">
-            <p style="font-weight: bold">Disclaimer</p>
-            <p>
-              By using this coding assistant, you acknowledge and agree the
-              following: Any information you enter into the prompt, as well as
-              the current code (being edited) and table headers, may be shared
-              with OpenAI and KNIME in order to provide and improve this
-              service.
-            </p>
-
-            <p>
-              KNIME is not responsible for any content, input or output, or
-              actions triggered by the generated code, and is not liable for any
-              damages arising from or related to your use of the coding
-              assistant.
-            </p>
-
-            <p>This is an experimental service, USE AT YOUR OWN RISK.</p>
-          </div>
-          <div class="disclaimer-button-container">
-            <Button
-              compact
-              primary
-              class="notification-button"
-              @click="showDisclaimer = false"
-              >Accept and close</Button
-            >
-          </div>
+      <div class="content-except-arrow">
+        <div v-show="status === 'uninstalled'" class="notification-bar">
+          <span class="notification">
+            To start generating code with our AI assistant, install the
+            <i>KNIME AI Assistant</i> extension
+          </span>
+          <Button
+            compact
+            primary
+            :to="'https://hub.knime.com/knime/extensions/org.knime.features.ai.assistant/latest'"
+            class="notification-button"
+          >
+            <LinkIcon />Download from KNIME Hub
+          </Button>
         </div>
-      </Transition>
-      <Transition name="slide-fade">
-        <AiSuggestion
-          v-if="promptResponseStore.promptResponse"
-          class="ai-suggestion"
-          @accept-suggestion="acceptSuggestion"
-        />
-      </Transition>
-      <div
-        class="chat-controls"
-        :class="{ 'chat-controls-border-top': hasTopContent }"
-        :style="{ '--left-distance': `calc(${leftOverflow}vw + 30px)` }"
-      >
-        <Transition name="slide-fade">
-          <div v-if="promptResponseStore.promptResponse" class="prompt-bar">
-            {{ promptResponseStore.promptResponse.message.content }}
-          </div>
-        </Transition>
-        <div class="chat-controls-text-input">
-          <textarea
-            ref="textarea"
-            v-model="input"
-            :disabled="status === 'waiting' || showDisclaimer"
-            class="textarea"
-            placeholder="Type your prompt"
-            @keydown="handleKeyDown"
-          />
-          <div class="chat-controls-buttons">
-            <FunctionButton
-              v-if="status === 'error' || status === 'idle'"
-              ref="sendButton"
-              title="Send"
-              :disabled="!input || showDisclaimer"
-              class="textarea-button"
-              @click="request"
-            >
-              <SendIcon class="icon" />
-            </FunctionButton>
-            <FunctionButton
-              v-if="status === 'waiting'"
-              ref="abortButton"
-              title="Cancel"
-              class="textarea-button"
-              @click="abortRequest"
-              @mouseover="mouseOverLoadingSpinner = true"
-              @mouseleave="mouseOverLoadingSpinner = false"
-            >
-              <AbortIcon v-if="mouseOverLoadingSpinner" class="icon" />
-              <LoadingIcon v-else class="icon" />
-            </FunctionButton>
+        <div v-show="status === 'unauthorized'" class="notification-bar">
+          <span class="notification">
+            To start generating code with our AI assistant, please log into your
+            <i>KNIME Hub</i> account
+          </span>
+          <Button
+            compact
+            primary
+            class="notification-button"
+            @click="tryLogin()"
+          >
+            Login to {{ hubId }}
+          </Button>
+        </div>
+        <div v-show="status === 'readonly'" class="notification-bar">
+          <span class="notification">
+            Script is overwritten by a flow variable.
+          </span>
+        </div>
+        <div
+          v-show="
+            status !== 'uninstalled' &&
+            status !== 'unauthorized' &&
+            status !== 'readonly'
+          "
+        >
+          <Transition name="disclaimer-slide-fade">
+            <div v-if="showDisclaimer" class="disclaimer-container">
+              <div class="disclaimer-text">
+                <p style="font-weight: bold">Disclaimer</p>
+                <p>
+                  By using this coding assistant, you acknowledge and agree the
+                  following: Any information you enter into the prompt, as well
+                  as the current code (being edited) and table headers, may be
+                  shared with OpenAI and KNIME in order to provide and improve
+                  this service.
+                </p>
+
+                <p>
+                  KNIME is not responsible for any content, input or output, or
+                  actions triggered by the generated code, and is not liable for
+                  any damages arising from or related to your use of the coding
+                  assistant.
+                </p>
+
+                <p>This is an experimental service, USE AT YOUR OWN RISK.</p>
+              </div>
+              <div class="disclaimer-button-container">
+                <Button
+                  compact
+                  primary
+                  class="notification-button"
+                  @click="showDisclaimer = false"
+                  >Accept and close</Button
+                >
+              </div>
+            </div>
+          </Transition>
+          <Transition name="slide-fade">
+            <AiSuggestion
+              v-if="promptResponseStore.promptResponse"
+              class="ai-suggestion"
+              @accept-suggestion="acceptSuggestion"
+            />
+          </Transition>
+          <div
+            class="chat-controls"
+            :class="{ 'chat-controls-border-top': hasTopContent }"
+          >
+            <Transition name="slide-fade">
+              <div v-if="promptResponseStore.promptResponse" class="prompt-bar">
+                {{ promptResponseStore.promptResponse.message.content }}
+              </div>
+            </Transition>
+            <InfinityLoadingBar v-if="status === 'waiting'" />
+            <div class="chat-controls-text-input">
+              <textarea
+                ref="textarea"
+                v-model="input"
+                :disabled="status === 'waiting' || showDisclaimer"
+                class="textarea"
+                placeholder="Describe what your expression should do"
+                wrap="soft"
+                @keydown="handleKeyDown"
+              />
+              <div class="chat-controls-buttons">
+                <FunctionButton
+                  v-if="status === 'error' || status === 'idle'"
+                  ref="sendButton"
+                  primary
+                  title="Send"
+                  :disabled="!input || showDisclaimer"
+                  class="send-button"
+                  @click="request"
+                >
+                  <SendIcon class="icon" />
+                </FunctionButton>
+                <FunctionButton
+                  v-if="status === 'waiting'"
+                  ref="abortButton"
+                  title="Cancel"
+                  class="send-button abort-button"
+                  @click="abortRequest"
+                >
+                  <AbortIcon class="icon" />
+                </FunctionButton>
+              </div>
+            </div>
+            <div v-if="status === 'error'" class="error-message">
+              An error occurred. Please try again.
+            </div>
           </div>
         </div>
       </div>
+      <div class="arrow" />
+    </div>
+    <div ref="slottedContentContainerRef" class="slotted-content">
+      <slot name="ai-button" :toggle-ai-bar="toggleAiBar" />
     </div>
   </div>
 </template>
@@ -366,146 +371,185 @@ getInitialDataService()
   opacity: 0;
 }
 
-.ai-bar-container {
-  --ai-bar-margin: var(--space-12);
-
+.everything {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  position: absolute;
-  bottom: 20px;
-  background-color: var(--knime-gray-ultra-light);
-  border: 1px solid var(--knime-silver-sand);
-  font-size: 13px;
-  line-height: 17px;
-  z-index: 11; /* to display ai bar above the main code editor's scroll bar */
-  overflow: visible;
-  box-shadow: 0 -2px 8px 0 var(--knime-silver-sand-semi);
-  margin-bottom: var(--space-12); /* to hover above ai icon */
-  transition: width 0.2s ease-in-out;
 
-  & .subtitle {
-    color: var(--knime-black);
-    margin-top: var(--space-8);
-    font-style: italic;
-    display: flex;
-    justify-content: flex-start;
-    align-items: baseline;
-    flex-direction: row;
+  & .ai-bar-popup {
+    --default-ai-bar-width: 65vw;
+    --ai-bar-margin: var(--space-8);
+    --ai-bar-corner-radius: 8px;
+    --arrow-size: 18px;
 
-    & .text {
-      margin-right: var(--space-4);
-    }
+    z-index: 10;
 
-    & .button {
-      position: absolute;
-      bottom: 4px;
-      right: 79px;
+    /* Amount by which the left edge of prompt is left of the centre of AI button. */
+    --left-hang: 150px;
 
-      &.primary {
-        right: 4px;
-      }
-    }
-  }
+    /* Correcting term for when the InputOutputPane is too small to allow the preferred left hang. */
+    --left-hang-correction-for-left-pane: max(
+      0px,
+      calc(var(--left-hang) - var(--left-splitter-position))
+    );
 
-  & .ai-suggestion {
-    margin: var(--ai-bar-margin);
-    min-height: 200px;
-    height: 40vh;
-  }
+    /* Additional correcting term so that arrow never falls off the edge of the prompt. 
+    We shift the prompt left by this amount and then the arrow right by this amount. */
+    --left-hang-correction-for-arrow: var(--arrow-size);
 
-  & .chat-controls-border-top {
-    border-top: 1px solid var(--knime-silver-sand);
-  }
+    width: var(--default-ai-bar-width);
+    max-width: 1000px;
+    position: absolute;
+    left: calc(50%); /* put the left edge at the middle of the AI button */
+    top: calc(-1 * (var(--arrow-size) + 2px));
+    transform: translateY(-100%)
+      translateX(
+        calc(
+          var(--left-hang-correction-for-left-pane) - var(--left-hang) -
+            var(--left-hang-correction-for-arrow)
+        )
+      );
 
-  & .chat-controls {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-
-    & .prompt-bar {
-      margin-top: var(--ai-bar-margin);
-      margin-right: var(--ai-bar-margin);
-      margin-left: var(--ai-bar-margin);
-      line-height: 15.23px;
-    }
-
-    & .chat-controls-text-input {
+    & .content-except-arrow {
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
+      background-color: var(--knime-gray-ultra-light);
+      border: 1px solid var(--knime-porcelain);
+      border-radius: var(--ai-bar-corner-radius);
+      font-size: 13px;
+      line-height: 27px;
+      z-index: 11; /* to display ai bar above the main code editor's scroll bar */
+      box-shadow: var(--shadow-elevation-2);
+      transition: width 0.2s ease-in-out;
+      overflow: hidden;
 
-      & .textarea {
-        flex-grow: 1;
-        border: 1px solid var(--knime-silver-sand);
-        overflow: hidden;
-        resize: none;
-        border-radius: 0;
-        bottom: -1; /* is this intentional? */
-        padding: var(--space-16);
-        padding-right: var(--space-32);
-        margin: var(--ai-bar-margin);
-        color: var(--knime-masala);
-        font-size: 13px;
-        font-weight: lighter;
-        font-family: Roboto, sans-serif;
+      & .subtitle {
+        color: var(--knime-black);
+        margin-top: var(--space-8);
+        font-style: italic;
+        display: flex;
+        justify-content: flex-start;
+        align-items: baseline;
+        flex-direction: row;
 
-        &::placeholder {
-          color: var(--knime-stone);
+        & .text {
+          margin-right: var(--space-4);
         }
 
-        &:focus {
-          outline: none;
+        & .button {
+          position: absolute;
+          bottom: 4px;
+          right: 79px;
+
+          &.primary {
+            right: 4px;
+          }
         }
       }
 
-      & .chat-controls-buttons {
-        & .textarea-button {
-          position: absolute;
-          right: 20px;
-          bottom: 20px;
+      & .ai-suggestion {
+        margin: var(--ai-bar-margin);
+        min-height: 200px;
+        height: 40vh;
+      }
+
+      & .chat-controls-border-top {
+        border-top: 1px solid var(--knime-porcelain);
+      }
+
+      & .chat-controls {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+
+        & .prompt-bar {
+          margin-top: var(--ai-bar-margin);
+          margin-right: var(--ai-bar-margin);
+          margin-left: var(--ai-bar-margin);
+          line-height: 15.23px;
+          word-wrap: break-word;
         }
+
+        & .error-message {
+          color: var(--knime-coral-dark);
+          z-index: 12;
+          margin: 0 var(--ai-bar-margin) var(--ai-bar-margin)
+            var(--ai-bar-margin);
+          line-height: 15.23px;
+        }
+
+        & .chat-controls-text-input {
+          display: flex;
+          flex-flow: row nowrap;
+          align-items: center;
+          z-index: 12;
+
+          & .textarea {
+            flex-grow: 1;
+            border: 2px solid var(--knime-porcelain);
+            resize: none;
+            border-radius: 0;
+            padding: var(--space-8);
+            margin: var(--ai-bar-margin);
+            color: var(--knime-masala);
+            font-size: 13px;
+            font-weight: lighter;
+            font-family: Roboto, sans-serif;
+            overflow: hidden;
+            text-wrap: soft;
+
+            &::placeholder {
+              color: var(--knime-dove-gray);
+            }
+
+            &:disabled {
+              opacity: 0.5;
+            }
+
+            &:focus {
+              outline: none;
+            }
+          }
+
+          & .chat-controls-buttons {
+            margin: var(--ai-bar-margin);
+            margin-left: 0;
+          }
+        }
+      }
+
+      & .notification-bar {
+        display: flex;
+        justify-content: space-between;
+        vertical-align: middle;
+        border-top: 1px solid var(--knime-porcelain);
+        position: relative;
+        height: 49px;
       }
     }
-  }
 
-  & :deep(.chat-controls::after) {
-    --arrow-size: 18px;
+    & .arrow {
+      width: var(--arrow-size);
+      height: var(--arrow-size);
+      content: "";
+      position: absolute;
+      background-color: var(--knime-gray-ultra-light);
+      bottom: 0;
+      z-index: 1;
+      border-right: 1px solid var(--knime-porcelain);
+      border-top: 1px solid var(--knime-porcelain);
 
-    width: var(--arrow-size);
-    height: var(--arrow-size);
-    left: calc(var(--left-distance) + 40px);
-    content: "";
-    position: absolute;
-    background-color: var(--knime-gray-ultra-light);
-    bottom: 0;
-    z-index: 1;
-    border-right: 1px solid var(--knime-silver-sand);
-    border-top: 1px solid var(--knime-silver-sand);
-    transform: translate(-50%, 50%) rotate(135deg);
-  }
-
-  & .notification-bar {
-    display: flex;
-    justify-content: space-between;
-    vertical-align: middle;
-    border-top: 1px solid var(--knime-silver-sand);
-    position: relative;
-    height: 49px;
-  }
-
-  & :deep(.notification-bar::after) {
-    --arrow-size: 18px;
-
-    width: var(--arrow-size);
-    height: var(--arrow-size);
-    left: calc(var(--left-distance) + 40px);
-    content: "";
-    position: absolute;
-    background-color: var(--knime-gray-ultra-light);
-    bottom: 0;
-    z-index: 1;
-    border-right: 1px solid var(--knime-silver-sand);
-    border-top: 1px solid var(--knime-silver-sand);
-    transform: translate(-50%, 50%) rotate(135deg);
+      /* we clip the arrow to stop it casting a shadow on the rest of the popup */
+      clip-path: rect(calc(0px - 100vw) calc(100% + 100vw) 100% 0);
+      box-shadow: var(--shadow-elevation-2);
+      transform: translateX(
+          calc(
+            var(--left-hang) - var(--arrow-size) / 2 -
+              var(--left-hang-correction-for-left-pane) +
+              var(--left-hang-correction-for-arrow)
+          )
+        )
+        translateY(50%) rotate(135deg);
+    }
   }
 }
 
@@ -520,21 +564,30 @@ getInitialDataService()
   margin-right: var(--space-16);
 }
 
+.abort-button {
+  border: 1px solid var(--knime-silver-sand);
+}
+
 .disclaimer-container {
   display: flex;
   flex-direction: column;
-}
 
-.disclaimer-text {
-  margin: var(--space-8);
-  line-height: 20px;
-  padding: var(--space-4);
-  background-color: var(--knime-white);
-}
+  & .disclaimer-text {
+    margin: var(--space-8);
+    line-height: 20px;
+    padding: var(--space-4);
+    background-color: var(--knime-white);
+    border-radius: var(--ai-bar-corner-radius);
+  }
 
-.disclaimer-button-container {
-  display: flex;
-  justify-content: right;
+  & .disclaimer-button-container {
+    display: flex;
+    justify-content: right;
+
+    & > button {
+      margin-top: 0;
+    }
+  }
 }
 
 .disclaimer-slide-fade-leave-active {
@@ -547,4 +600,3 @@ getInitialDataService()
   opacity: 0;
 }
 </style>
-@/consoleHandler
