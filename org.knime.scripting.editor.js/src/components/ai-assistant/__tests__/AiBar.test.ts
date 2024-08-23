@@ -1,6 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LoadingIcon } from "@knime/components";
 import { getScriptingService } from "@/scripting-service";
 import {
   clearPromptResponseStore,
@@ -14,6 +13,8 @@ import { ref } from "vue";
 import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
 import { DEFAULT_INITIAL_SETTINGS } from "@/settings-service-browser-mock";
 import { getSettingsService } from "@/settings-service";
+import InfinityLoadingBar from "@/components/InfinityLoadingBar.vue";
+import type { PaneSizes } from "@/components/utils/paneSizes";
 
 vi.mock("@/scripting-service");
 vi.mock("@/editor");
@@ -28,6 +29,25 @@ vi.mock("@/settings-service", () => ({
     getSettings: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_SETTINGS)),
   })),
 }));
+
+const doMount = (
+  args: {
+    props?: Partial<InstanceType<typeof AiBar>["$props"]>;
+    slots?: any;
+  } = {
+    props: {
+      currentPaneSizes: { left: 0, right: 0, bottom: 0 } satisfies PaneSizes,
+      showAiBarContainer: true,
+    },
+    slots: {},
+  },
+) => {
+  return mount(AiBar, {
+    // @ts-ignore I'm not sure why this line gives a type error, because it's fine
+    props: args.props,
+    slots: args.slots,
+  });
+};
 
 describe("AiBar", () => {
   beforeEach(() => {
@@ -44,14 +64,14 @@ describe("AiBar", () => {
   });
 
   it("renders chat controls if no prompt is active", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     expect(bar.find(".textarea").exists()).toBeTruthy();
     expect(bar.findComponent({ ref: "sendButton" }).exists()).toBeTruthy();
   });
 
   it("test aiBar success", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     (bar.vm as any).showDisclaimer = false;
     await bar.vm.$nextTick();
@@ -82,7 +102,7 @@ describe("AiBar", () => {
   });
 
   it("test aiBar with empty input disables button", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
 
     // click Send Button
@@ -93,7 +113,7 @@ describe("AiBar", () => {
   });
 
   it("test aiBar abort request", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     const scriptingService = getScriptingService();
 
@@ -120,7 +140,7 @@ describe("AiBar", () => {
   });
 
   it("show diff editor when code suggestion is available", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     expect(bar.findComponent(AiSuggestion).exists()).toBeFalsy();
     await (bar.vm as any).handleCodeSuggestion({
       code: JSON.stringify({ code: "some code" }),
@@ -135,12 +155,12 @@ describe("AiBar", () => {
       suggestedCode: "code",
     };
 
-    const bar = mount(AiBar);
+    const bar = doMount();
     expect(bar.findComponent(AiSuggestion).exists()).toBeTruthy();
   });
 
   it("show disclaimer on first startup", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     (bar.vm as any).showDisclaimer = true;
     await bar.vm.$nextTick();
@@ -151,7 +171,7 @@ describe("AiBar", () => {
   it("show login button if not logged in yet", async () => {
     vi.mocked(getScriptingService().isLoggedIntoHub).mockResolvedValue(false);
 
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
 
     const downloadNotification = bar.findAll(".notification-bar").at(0);
@@ -183,7 +203,7 @@ describe("AiBar", () => {
       ),
     });
 
-    const bar = mount(AiBar);
+    const bar = doMount(AiBar);
     await flushPromises();
 
     const downloadNotification = bar.findAll(".notification-bar").at(0);
@@ -213,7 +233,7 @@ describe("AiBar", () => {
       registerSettingsGetterForApply: vi.fn(() => Promise.resolve()),
     });
 
-    const bar = mount(AiBar);
+    const bar = doMount(AiBar);
     await flushPromises();
     const downloadNotification = bar.findAll(".notification-bar").at(0);
     const loginNotification = bar.findAll(".notification-bar").at(1);
@@ -229,7 +249,7 @@ describe("AiBar", () => {
   });
 
   it("neither install nor login buttons are visible if ai assistant is ready to be used", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     const downloadNotification = bar.findAll(".notification-bar").at(0);
     const loginNotification = bar.findAll(".notification-bar").at(1);
@@ -239,8 +259,8 @@ describe("AiBar", () => {
     expect(loginNotification?.isVisible()).toBeFalsy();
   });
 
-  it("shows loading spinner in waiting state", async () => {
-    const bar = mount(AiBar);
+  it("shows abort button and loading bar in waiting state", async () => {
+    const bar = doMount();
     await flushPromises();
     const message = "Do something!";
     // write to textarea
@@ -257,16 +277,18 @@ describe("AiBar", () => {
       }),
     );
 
-    expect(bar.findComponent(LoadingIcon).exists()).toBeFalsy();
+    expect(bar.findComponent(InfinityLoadingBar).exists()).toBeFalsy();
+    expect(bar.find(".abort-button").exists()).toBeFalsy();
 
     const sendButton = bar.findComponent({ ref: "sendButton" });
     await sendButton.vm.$emit("click");
 
-    expect(bar.findComponent(LoadingIcon).exists()).toBeTruthy();
+    expect(bar.findComponent(InfinityLoadingBar).exists()).toBeTruthy();
+    expect(bar.find(".abort-button").exists()).toBeTruthy();
   });
 
   it("aborts active request if ai bar is dismissed", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     (bar.vm as any).status = "waiting";
     bar.unmount();
@@ -276,11 +298,20 @@ describe("AiBar", () => {
   });
 
   it("does not abort request if ai bar is dismissed and there is no active request", async () => {
-    const bar = mount(AiBar);
+    const bar = doMount();
     await flushPromises();
     bar.unmount();
     expect(getScriptingService().sendToService).not.toHaveBeenCalledWith(
       "abortSuggestCodeRequest",
     );
+  });
+
+  it("displays slotted content", () => {
+    const bar = doMount({
+      slots: {
+        "ai-button": "<div id='test-id'>Test</div>",
+      },
+    });
+    expect(bar.find("#test-id").exists()).toBeTruthy();
   });
 });

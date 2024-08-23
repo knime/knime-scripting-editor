@@ -1,10 +1,10 @@
 import { describe, afterEach, it, vi, expect } from "vitest";
 import CodeEditorControlBar from "../CodeEditorControlBar.vue";
 import { flushPromises, mount } from "@vue/test-utils";
-import AiBar from "../ai-assistant/AiBar.vue";
 import { getInitialDataService } from "@/initial-data-service";
 import { beforeEach } from "node:test";
 import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
+import type { PaneSizes } from "../utils/paneSizes";
 
 vi.mock("@/scripting-service");
 vi.mock("@/initial-data-service", () => ({
@@ -12,6 +12,24 @@ vi.mock("@/initial-data-service", () => ({
     getInitialData: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_DATA)),
   })),
 }));
+
+const doMount = (
+  args: {
+    props?: Partial<InstanceType<typeof CodeEditorControlBar>["$props"]>;
+    slots?: any;
+  } = {
+    props: {
+      currentPaneSizes: { left: 0, right: 0, bottom: 0 } satisfies PaneSizes,
+    },
+    slots: {},
+  },
+) => {
+  return mount(CodeEditorControlBar, {
+    // @ts-ignore
+    props: args.props,
+    slots: args.slots,
+  });
+};
 
 describe("CodeEditorControlBar", () => {
   afterEach(() => {
@@ -35,62 +53,62 @@ describe("CodeEditorControlBar", () => {
       ),
     });
 
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
 
     expect(wrapper.findComponent({ ref: "aiButton" }).exists()).toBeFalsy();
   });
 
   it("ai button opens ai bar", async () => {
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
 
     const button = wrapper.find(".ai-button");
 
     // aiBar should be turned off at mount
-    expect(wrapper.findComponent(AiBar).exists()).toBeFalsy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeFalsy();
     await button.trigger("click");
 
     // then it should be visible
-    expect(wrapper.findComponent(AiBar).exists()).toBeTruthy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeTruthy();
   });
 
   it("ai button closes ai bar if it is opened", async () => {
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.find(".ai-button");
 
     await button.trigger("click");
-    expect(wrapper.findComponent(AiBar).exists()).toBeTruthy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeTruthy();
     await button.trigger("click");
-    expect(wrapper.findComponent(AiBar).exists()).toBeFalsy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeFalsy();
   });
 
   it("ai bar is closed on click outside of ai bar", async () => {
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.find(".ai-button");
     await wrapper.vm.$nextTick();
     await button.trigger("click");
-    expect(wrapper.findComponent(AiBar).exists()).toBeTruthy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeTruthy();
     window.dispatchEvent(new Event("click")); // emulate click outside
     await wrapper.vm.$nextTick();
-    expect(wrapper.findComponent(AiBar).exists()).toBeFalsy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeFalsy();
   });
 
   it("ai bar is not closed on click inside of ai bar", async () => {
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.find(".ai-button");
     await wrapper.vm.$nextTick();
     await button.trigger("click");
-    expect(wrapper.findComponent(AiBar).exists()).toBeTruthy();
-    await wrapper.findComponent(AiBar).trigger("click");
-    expect(wrapper.findComponent(AiBar).exists()).toBeTruthy();
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeTruthy();
+    await wrapper.find("[data-testid='ai-bar-popup']").trigger("click");
+    expect(wrapper.find("[data-testid='ai-bar-popup']").exists()).toBeTruthy();
   });
 
   it("test aiButton is available if inputs and code assistance are available", async () => {
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.findComponent({ ref: "aiButton" });
 
@@ -107,7 +125,7 @@ describe("CodeEditorControlBar", () => {
       ),
     });
 
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.findComponent({ ref: "aiButton" });
 
@@ -123,7 +141,7 @@ describe("CodeEditorControlBar", () => {
       },
     });
 
-    const wrapper = mount(CodeEditorControlBar);
+    const wrapper = doMount();
     await flushPromises();
     const button = wrapper.findComponent({ ref: "aiButton" });
 
