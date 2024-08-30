@@ -1,8 +1,7 @@
-import { describe, afterEach, it, vi, expect } from "vitest";
+import { describe, beforeEach, afterEach, it, vi, expect } from "vitest";
 import CodeEditorControlBar from "../CodeEditorControlBar.vue";
 import { flushPromises, mount } from "@vue/test-utils";
 import { getInitialDataService } from "@/initial-data-service";
-import { beforeEach } from "node:test";
 import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
 import type { PaneSizes } from "../utils/paneSizes";
 
