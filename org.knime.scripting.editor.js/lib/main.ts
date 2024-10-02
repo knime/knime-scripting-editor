@@ -48,6 +48,7 @@ import {
   type GenericNodeSettings,
   getSettingsService,
 } from "@/settings-service";
+import { registerScriptSettingsChange } from "@/components/utils/registerScriptSettingsChange";
 
 export {
   COLUMN_INSERTION_EVENT,
@@ -69,6 +70,7 @@ export {
   setConsoleHandler,
   useShouldFocusBePainted,
   useReadonlyStore,
+  registerScriptSettingsChange,
 };
 export type {
   ConsoleHandler,

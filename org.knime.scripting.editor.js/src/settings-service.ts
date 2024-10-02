@@ -6,6 +6,11 @@ export type GenericNodeSettings = {
   settingsAreOverriddenByFlowVariable?: boolean;
 };
 
+export type SingleEditorNodeSettings = {
+  script: string;
+  modelOrView: "model" | "view";
+};
+
 const settingsLoaded = ref(false);
 
 const loadDataPromise = getSettingsHelper()
@@ -19,6 +24,8 @@ const settingsService = {
   getSettings: () => loadDataPromise,
   registerSettingsGetterForApply: (settingsGetter: () => GenericNodeSettings) =>
     getSettingsHelper().registerApplyListener(settingsGetter),
+  registerSettings: (modelOrView: "model" | "view") =>
+    getSettingsHelper().registerSettings(modelOrView),
 };
 export type SettingsServiceType = typeof settingsService;
 

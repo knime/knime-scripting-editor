@@ -3,8 +3,9 @@ import { onMounted, ref } from "vue";
 import { useMainCodeEditor } from "@/editor";
 import { onKeyStroke } from "@vueuse/core";
 import {
-  getSettingsService,
   type GenericNodeSettings,
+  getSettingsService,
+  type SingleEditorNodeSettings,
 } from "@/settings-service";
 import { insertionEventHelper } from "@/components/utils/insertionEventHelper";
 import { COLUMN_INSERTION_EVENT } from "@/components/InputOutputItem.vue";
@@ -44,7 +45,9 @@ onMounted(() => {
   getSettingsService()
     .getSettings()
     .then((settings: GenericNodeSettings) => {
-      codeEditorState.setInitialText(settings.script);
+      codeEditorState.setInitialText(
+        (settings as SingleEditorNodeSettings).script,
+      );
 
       useReadonlyStore().value =
         settings.settingsAreOverriddenByFlowVariable ?? false;
