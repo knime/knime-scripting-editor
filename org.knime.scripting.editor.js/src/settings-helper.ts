@@ -11,66 +11,52 @@ type InitialDataAndSettings = {
   settings: GenericNodeSettings;
 };
 
-class SettingsHelper {
-  // eslint-disable-next-line no-use-before-define
-  private static instance: SettingsHelper;
-  private jsonDataService: Promise<JsonDataService>;
-  private dialogService: Promise<DialogService>;
+let cachedInitialDataAndSettings: InitialDataAndSettings | null = null;
 
-  private cachedInitialDataAndSettings: InitialDataAndSettings | null = null;
+const jsonDataServicePromise = JsonDataService.getInstance();
+const dialogServicePromise = DialogService.getInstance();
 
-  private constructor() {
-    this.jsonDataService = JsonDataService.getInstance();
-    this.dialogService = DialogService.getInstance();
+const loadDataIntoCache = async (): Promise<void> => {
+  cachedInitialDataAndSettings = (await (
+    await jsonDataServicePromise
+  ).initialData()) as InitialDataAndSettings;
+};
+
+const getInitialDataAndSettings = async (): Promise<InitialDataAndSettings> => {
+  if (!cachedInitialDataAndSettings) {
+    await loadDataIntoCache();
   }
+  return cachedInitialDataAndSettings!;
+};
 
-  private async loadDataIntoCache(): Promise<void> {
-    this.cachedInitialDataAndSettings = (await (
-      await this.jsonDataService
-    ).initialData()) as InitialDataAndSettings;
-  }
-
-  public async getInitialDataAndSettings(): Promise<InitialDataAndSettings> {
-    if (!this.cachedInitialDataAndSettings) {
-      await this.loadDataIntoCache();
+const registerApplyListener = async (
+  settingsGetter: () => GenericNodeSettings,
+): Promise<void> => {
+  const dialogService = await dialogServicePromise;
+  dialogService.setApplyListener(async () => {
+    const settings = settingsGetter();
+    try {
+      await (await jsonDataServicePromise).applyData(settings);
+      return { isApplied: true };
+    } catch (e) {
+      consola.warn("Failed to apply settings", e);
+      return { isApplied: false };
     }
+  });
+};
 
-    return this.cachedInitialDataAndSettings!;
-  }
-
-  public async registerApplyListener(
-    settingsGetter: () => GenericNodeSettings,
-  ): Promise<void> {
-    const dialogService = await this.dialogService;
-    dialogService.setApplyListener(async () => {
-      const settings = settingsGetter();
-      try {
-        await (await this.jsonDataService).applyData(settings);
-        return { isApplied: true };
-      } catch (e) {
-        consola.warn("Failed to apply settings", e);
-        return { isApplied: false };
-      }
+const registerSettings = async <T>(
+  modelOrView: "view" | "model",
+): Promise<(initialSetting: T) => SettingState> => {
+  const dialogService = await dialogServicePromise;
+  return (initialSetting: T) =>
+    dialogService.registerSettings(modelOrView)({
+      initialValue: initialSetting,
     });
-  }
+};
 
-  public async registerSettings<T>(
-    modelOrView: "view" | "model",
-  ): Promise<(initialSetting: T) => SettingState> {
-    const dialogService = await this.dialogService;
-    return (initialSetting: T) =>
-      dialogService.registerSettings(modelOrView)({
-        initialValue: initialSetting,
-      });
-  }
-
-  public static getInstance(): SettingsHelper {
-    if (!SettingsHelper.instance) {
-      SettingsHelper.instance = new SettingsHelper();
-    }
-    return SettingsHelper.instance;
-  }
-}
-
-export const getSettingsHelper = (): SettingsHelper =>
-  SettingsHelper.getInstance();
+export const getSettingsHelper = () => ({
+  getInitialDataAndSettings,
+  registerApplyListener,
+  registerSettings,
+});
