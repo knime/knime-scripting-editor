@@ -20,6 +20,7 @@ import ScriptingEditorBottomPane, {
 import { type GenericNodeSettings } from "@/settings-service";
 import { getInitialDataService } from "@/initial-data-service";
 import type { InputOutputModel } from "@/components/InputOutputItem.vue";
+import { DialogService } from "@knime/ui-extension-service";
 
 const commonMenuItems: MenuItem[] = [
   // TODO: add actual common menu items
@@ -77,9 +78,27 @@ const rootSplitPaneRef = useElementBounding(rootSplitPane);
 const editorSplitPane = ref();
 const editorSplitPaneRef = useElementBounding(editorSplitPane);
 
+// TODO: this doesn't really work, because the embedded
+// dialogue starts in small mode. If we set this to 'true'
+// by default, it breaks things in popup mode. We need an
+// API to get whether we are in embedded mode or popup mode.
+// An API to get the large/small display mode would also be useful,
+// because I don't know if the embedded dialogues ALWAYS start
+// in small mode (and if they always will in the future).
+//
+// Basically, I need to grill Helian or someone else about
+// what APIs exist to check these states.
+const isSmallMode = ref(false);
+DialogService.getInstance().then((dialogService) =>
+  dialogService.addOnDisplayModeChangeCallback((evt) => {
+    console.log("Display mode changed to", evt.mode);
+    isSmallMode.value = evt.mode === "small";
+  }),
+);
+
 // All the logic for resizing panes
 const {
-  collapseAllPanes,
+  collapseAllPanes: collapseAllPanesLocal,
   collapsePane,
   collapseLeftPane,
   currentPaneSizes,
@@ -100,6 +119,10 @@ const {
   rightPaneLayout: props.rightPaneLayout,
   rootSplitPaneRef,
   editorSplitPaneRef,
+});
+
+const collapseAllPanes = computed(() => {
+  return collapseAllPanesLocal.value || isSmallMode.value;
 });
 
 // Dropping input/output items
