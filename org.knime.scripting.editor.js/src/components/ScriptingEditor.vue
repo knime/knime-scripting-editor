@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computedAsync, useElementBounding } from "@vueuse/core";
+import { computedAsync } from "@vueuse/core";
 import { computed, ref, useSlots } from "vue";
 import { Pane, Splitpanes } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
@@ -34,7 +34,10 @@ interface Props {
   menuItems?: MenuItem[];
   showControlBar?: boolean;
   initialPaneSizes?: PaneSizes;
-  rightPaneMinimumWidthInPixel?: number;
+  rightPaneWidthLimitsPixels?: {
+    min: number;
+    max: number;
+  };
   toSettings?: (settings: GenericNodeSettings) => GenericNodeSettings;
   additionalBottomPaneTabContent?: SlottedTab[];
 }
@@ -50,7 +53,10 @@ const props = withDefaults(defineProps<Props>(), {
     right: 25,
     bottom: 30,
   }),
-  rightPaneMinimumWidthInPixel: () => 0,
+  rightPaneWidthLimitsPixels: () => ({
+    min: 0,
+    max: Infinity,
+  }),
   additionalBottomPaneTabContent: () => [] as SlottedTab[],
   toSettings: (settings: GenericNodeSettings) => settings,
 });
@@ -67,39 +73,43 @@ const slots = defineSlots<{
   [key: BottomPaneTabControlsSlotName]: () => any;
 }>();
 
-const isRightPaneCollapsable = computed(
-  () => props.rightPaneMinimumWidthInPixel === 0,
-);
 const emit = defineEmits(["menu-item-clicked"]);
 
-const rootSplitPane = ref();
-const rootSplitPaneRef = useElementBounding(rootSplitPane);
-const editorSplitPane = ref();
-const editorSplitPaneRef = useElementBounding(editorSplitPane);
+const uncorrectedNominalSplitPaneSizes = ref(props.initialPaneSizes);
 
 // All the logic for resizing panes
 const {
-  collapseAllPanes,
-  collapsePane,
-  collapseLeftPane,
-  currentPaneSizes,
-  isBottomPaneCollapsed,
-  isLeftPaneCollapsed,
-  isRightPaneCollapsed,
-  minRatioOfRightPaneInPercent,
-  resizePane,
-  updatePreviousPaneSize,
-  updateRightPane,
-  showButtonText,
-  usedHorizontalCodeEditorPaneSize,
-  usedMainPaneSize,
-  usedVerticalCodeEditorPaneSize,
-} = useResizeLogic({
-  initialPaneSizes: props.initialPaneSizes,
-  rightPaneMinimumWidthInPixel: props.rightPaneMinimumWidthInPixel,
-  rightPaneLayout: props.rightPaneLayout,
-  rootSplitPaneRef,
-  editorSplitPaneRef,
+  leftPanelMaxWidthPercent,
+  leftPanelMinWidthPercent,
+  leftPanelShouldCollapse,
+  rightPanelMaxWidthPercent,
+  rightPanelMinWidthPercent,
+  rightPanelShouldCollapse,
+  allPanelsShouldCollapse,
+  leftPanelCorrectedWidthPercent,
+  rightPanelCorrectedWidthPercent,
+} = useResizeLogic(
+  uncorrectedNominalSplitPaneSizes,
+  props.rightPaneWidthLimitsPixels,
+);
+
+const onSplitPaneResized = (
+  panel: "left" | "right" | "bottom",
+  newSize: number,
+) => {
+  if (panel === "left") {
+    uncorrectedNominalSplitPaneSizes.value.left = newSize;
+  } else if (panel === "right") {
+    uncorrectedNominalSplitPaneSizes.value.right = newSize;
+  } else {
+    uncorrectedNominalSplitPaneSizes.value.bottom = newSize;
+  }
+};
+
+const bottomPaneDefaultHeightAccountingForCollapse = computed(() => {
+  return allPanelsShouldCollapse.value
+    ? 0
+    : uncorrectedNominalSplitPaneSizes.value.bottom;
 });
 
 // Dropping input/output items
@@ -119,7 +129,7 @@ const onMenuItemClicked = (args: { event: Event; item: SettingsMenuItem }) => {
 
 // Convenient to have this computed property for reactive components
 const showControlBarDynamic = computed(() => {
-  return props.showControlBar && !collapseAllPanes.value;
+  return props.showControlBar && !allPanelsShouldCollapse.value;
 });
 
 // We need either filename+language, or provided editor slot
@@ -149,7 +159,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 <template>
   <div class="layout">
     <HeaderBar
-      v-if="!collapseAllPanes && title !== null"
+      v-if="!allPanelsShouldCollapse && title !== null"
       :title="title!"
       :menu-items="[...commonMenuItems, ...menuItems]"
       @menu-item-click="onMenuItemClicked"
@@ -169,31 +179,20 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 
     <splitpanes
       v-show="!showSettingsPage"
-      ref="rootSplitPane"
       data-testid="mainSplitpane"
-      class="common-splitter unset-transition main-splitpane"
+      class="common-splitter unset-transition main-splitpane slim-splitter"
       :dbl-click-splitter="false"
       :class="{
-        'slim-mode': collapseAllPanes,
-        'left-facing-splitter': !isLeftPaneCollapsed,
-        'right-facing-splitter': isLeftPaneCollapsed,
-        'collapse-left-pane': collapseLeftPane,
+        'no-splitter': allPanelsShouldCollapse || leftPanelShouldCollapse,
       }"
-      @splitter-click="
-        collapsePane('left');
-        updatePreviousPaneSize('right');
-      "
-      @resize="
-        updateRightPane($event[0].size);
-        resizePane($event[0].size, 'left', false);
-        updatePreviousPaneSize('right');
-      "
-      @resized="updatePreviousPaneSize('left')"
+      @resize="onSplitPaneResized('left', $event[0].size)"
     >
       <pane
-        v-show="!collapseLeftPane"
+        v-show="!leftPanelShouldCollapse && !allPanelsShouldCollapse"
         data-testid="leftPane"
-        :size="currentPaneSizes.left"
+        :size="leftPanelCorrectedWidthPercent"
+        :min-size="leftPanelMinWidthPercent"
+        :max-size="leftPanelMaxWidthPercent"
         class="scrollable-y"
       >
         <slot name="left-pane">
@@ -204,43 +203,39 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
         </slot>
       </pane>
 
-      <pane data-testid="mainPane" :size="usedMainPaneSize" min-size="40">
+      <pane data-testid="mainPane" :size="100 - leftPanelCorrectedWidthPercent">
         <splitpanes
           data-testid="horizontalSplitpane"
           horizontal
           class="common-splitter horizontal-splitpane"
-          :dbl-click-splitter="false"
           :class="{
-            'down-facing-splitter': !isBottomPaneCollapsed,
-            'up-facing-splitter': isBottomPaneCollapsed,
+            'no-splitter': allPanelsShouldCollapse,
           }"
-          @splitter-click="collapsePane('bottom')"
-          @resize="resizePane($event[1].size, 'bottom')"
+          :dbl-click-splitter="false"
+          @resize="onSplitPaneResized('bottom', 100 - $event[0].size)"
+          @splitter-click="
+            uncorrectedNominalSplitPaneSizes.bottom == 0
+              ? (uncorrectedNominalSplitPaneSizes.bottom = 30)
+              : (uncorrectedNominalSplitPaneSizes.bottom = 0)
+          "
         >
           <pane
             data-testid="topPane"
-            :size="usedVerticalCodeEditorPaneSize"
-            min-size="40"
+            :size="100 - bottomPaneDefaultHeightAccountingForCollapse"
           >
             <splitpanes
               data-testid="verticalSplitpane"
-              class="common-splitter unset-transition vertical-splitpane"
+              class="common-splitter unset-transition slim-splitter vertical-splitpane"
               :class="{
-                'slim-splitter': !isRightPaneCollapsable,
-                'left-facing-splitter': isRightPaneCollapsed,
-                'right-facing-splitter': !isRightPaneCollapsed,
+                'no-splitter':
+                  allPanelsShouldCollapse || rightPanelShouldCollapse,
               }"
               :dbl-click-splitter="false"
-              @splitter-click="
-                isRightPaneCollapsable ? collapsePane('right') : undefined
-              "
-              @resized="resizePane($event[1].size, 'right')"
+              @resize="onSplitPaneResized('right', 100 - $event[0].size)"
             >
               <pane
-                ref="editorSplitPane"
                 data-testid="editorPane"
-                :size="usedHorizontalCodeEditorPaneSize"
-                min-size="25"
+                :size="100 - rightPanelCorrectedWidthPercent"
               >
                 <div class="editor-and-control-bar">
                   <div
@@ -266,13 +261,13 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                     <div class="run-button-panel">
                       <CodeEditorControlBar
                         v-if="showControlBarDynamic"
-                        :current-pane-sizes="currentPaneSizes"
-                        :show-button-text="showButtonText"
+                        :current-pane-sizes="uncorrectedNominalSplitPaneSizes"
+                        :show-button-text="true"
                       >
                         <template #controls>
                           <slot
                             name="code-editor-controls"
-                            :show-button-text="showButtonText"
+                            :show-button-text="true"
                           />
                         </template>
                       </CodeEditorControlBar>
@@ -281,16 +276,22 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                 </div>
               </pane>
               <pane
+                v-show="!rightPanelShouldCollapse && !allPanelsShouldCollapse"
                 data-testid="rightPane"
-                :size="currentPaneSizes.right"
+                :size="rightPanelCorrectedWidthPercent"
+                :min-size="rightPanelMinWidthPercent"
+                :max-size="rightPanelMaxWidthPercent"
                 class="right-pane"
-                :min-size="minRatioOfRightPaneInPercent"
               >
                 <slot name="right-pane" />
               </pane>
             </splitpanes>
           </pane>
-          <pane data-testid="bottomPane" :size="currentPaneSizes.bottom">
+          <pane
+            v-show="!allPanelsShouldCollapse"
+            data-testid="bottomPane"
+            :size="bottomPaneDefaultHeightAccountingForCollapse"
+          >
             <ScriptingEditorBottomPane
               :slotted-tabs="additionalBottomPaneTabContent"
             >
@@ -372,5 +373,13 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 
 .scrollable-y {
   overflow-y: auto;
+}
+
+.no-splitter {
+  /* stylelint-disable-next-line selector-class-pattern */
+  &:deep(> .splitpanes__splitter) {
+    pointer-events: none;
+    display: none;
+  }
 }
 </style>
