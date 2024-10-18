@@ -99,9 +99,6 @@ const {
   isLeftPaneCollapsed,
   isRightPaneCollapsed,
   minRatioOfRightPaneInPercent,
-  usedHorizontalCodeEditorPaneSize,
-  usedMainPaneSize,
-  usedVerticalCodeEditorPaneSize,
 } = useResizeLogic({
   initialPaneSizes: props.initialPaneSizes,
   rightPaneMinimumWidthInPixel: props.rightPaneMinimumWidthInPixel,
@@ -212,7 +209,11 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
         </slot>
       </pane>
 
-      <pane data-testid="mainPane" :size="usedMainPaneSize" min-size="40">
+      <pane
+        data-testid="mainPane"
+        :size="100 - currentPaneSizes.left"
+        min-size="40"
+      >
         <splitpanes
           data-testid="horizontalSplitpane"
           horizontal
@@ -227,7 +228,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
         >
           <pane
             data-testid="topPane"
-            :size="usedVerticalCodeEditorPaneSize"
+            :size="100 - currentPaneSizes.bottom"
             min-size="40"
           >
             <splitpanes
@@ -249,7 +250,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
               <pane
                 ref="editorSplitPane"
                 data-testid="editorPane"
-                :size="usedHorizontalCodeEditorPaneSize"
+                :size="100 - currentPaneSizes.right"
                 min-size="25"
               >
                 <div class="editor-and-control-bar">

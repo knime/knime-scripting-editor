@@ -72,13 +72,6 @@ export const useResizeLogic = ({
     }
   });
 
-  const usedMainPaneSize = computed(() => 100 - currentPaneSizes.value.left);
-  const usedHorizontalCodeEditorPaneSize = computed(
-    () => 100 - currentPaneSizes.value.right,
-  );
-  const usedVerticalCodeEditorPaneSize = computed(
-    () => 100 - currentPaneSizes.value.bottom,
-  );
   const isLeftPaneCollapsed = computed(() => currentPaneSizes.value.left === 0);
   const isRightPaneCollapsed = computed(
     () => currentPaneSizes.value.right === 0,
@@ -135,9 +128,6 @@ export const useResizeLogic = ({
     shouldShowButtonText,
     minRatioOfRightPaneInPercent,
     currentPaneSizes,
-    usedMainPaneSize,
-    usedHorizontalCodeEditorPaneSize,
-    usedVerticalCodeEditorPaneSize,
     isLeftPaneCollapsed,
     isRightPaneCollapsed,
     isBottomPaneCollapsed,
