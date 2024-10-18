@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computedAsync, useElementBounding } from "@vueuse/core";
-import { computed, ref, useSlots, watch } from "vue";
+import { computed, ref, useSlots } from "vue";
 import { Pane, Splitpanes } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import type { MenuItem } from "@knime/components";
@@ -181,6 +181,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
       :class="{
         'left-facing-splitter': !isLeftPaneCollapsed,
         'right-facing-splitter': isLeftPaneCollapsed,
+        'disabled-splitter': shouldCollapseLeftPane,
       }"
       @splitter-click="
         doToggleCollapsePane('left');
@@ -219,6 +220,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
           :class="{
             'down-facing-splitter': !isBottomPaneCollapsed,
             'up-facing-splitter': isBottomPaneCollapsed,
+            'disabled-splitter': shouldCollapseAllPanes,
           }"
           @splitter-click="doToggleCollapsePane('bottom')"
           @resize="doResizePane($event[1].size, 'bottom')"
@@ -235,6 +237,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                 'slim-splitter': !isRightPaneCollapsable,
                 'left-facing-splitter': isRightPaneCollapsed,
                 'right-facing-splitter': !isRightPaneCollapsed,
+                'disabled-splitter': shouldCollapseAllPanes,
               }"
               :dbl-click-splitter="false"
               @splitter-click="
@@ -381,5 +384,11 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 
 .scrollable-y {
   overflow-y: auto;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.disabled-splitter :deep(> .splitpanes__splitter) {
+  pointer-events: none;
+  display: none;
 }
 </style>
