@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computedAsync, useElementBounding } from "@vueuse/core";
-import { computed, ref, useSlots } from "vue";
+import { computed, ref, useSlots, watch } from "vue";
 import { Pane, Splitpanes } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import type { MenuItem } from "@knime/components";
@@ -87,21 +87,18 @@ const editorSplitPaneRef = useElementBounding(editorSplitPane);
 
 // All the logic for resizing panes
 const {
-  collapseAllPanes,
-  collapsePane,
-  collapseLeftPane,
+  doResizePane,
+  doUpdatePreviousPaneSize,
+  doUpdateRightPane,
+  doToggleCollapsePane,
   currentPaneSizes,
+  shouldCollapseAllPanes,
+  shouldCollapseLeftPane,
+  shouldShowButtonText,
   isBottomPaneCollapsed,
   isLeftPaneCollapsed,
   isRightPaneCollapsed,
   minRatioOfRightPaneInPercent,
-  resizePane,
-  updatePreviousPaneSize,
-  updateRightPane,
-  showButtonText,
-  usedHorizontalCodeEditorPaneSize,
-  usedMainPaneSize,
-  usedVerticalCodeEditorPaneSize,
 } = useResizeLogic({
   initialPaneSizes: props.initialPaneSizes,
   rightPaneMinimumWidthInPixel: props.rightPaneMinimumWidthInPixel,
@@ -127,7 +124,7 @@ const onMenuItemClicked = (args: { event: Event; item: SettingsMenuItem }) => {
 
 // Convenient to have this computed property for reactive components
 const showControlBarDynamic = computed(() => {
-  return props.showControlBar && !collapseAllPanes.value;
+  return props.showControlBar && !shouldCollapseAllPanes.value;
 });
 
 // We need either filename+language, or provided editor slot
@@ -157,7 +154,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 <template>
   <div class="layout">
     <HeaderBar
-      v-if="!collapseAllPanes && title !== null"
+      v-if="!shouldCollapseAllPanes && title !== null"
       :title="title!"
       :menu-items="[...commonMenuItems, ...menuItems]"
       @menu-item-click="onMenuItemClicked"
@@ -182,24 +179,21 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
       class="common-splitter unset-transition main-splitpane"
       :dbl-click-splitter="false"
       :class="{
-        'slim-mode': collapseAllPanes,
         'left-facing-splitter': !isLeftPaneCollapsed,
         'right-facing-splitter': isLeftPaneCollapsed,
-        'collapse-left-pane': collapseLeftPane,
       }"
       @splitter-click="
-        collapsePane('left');
-        updatePreviousPaneSize('right');
+        doToggleCollapsePane('left');
+        doUpdatePreviousPaneSize('right');
       "
       @resize="
-        updateRightPane($event[0].size);
-        resizePane($event[0].size, 'left', false);
-        updatePreviousPaneSize('right');
+        doUpdateRightPane($event[0].size);
+        doResizePane($event[0].size, 'left', false);
+        doUpdatePreviousPaneSize('right');
       "
-      @resized="updatePreviousPaneSize('left')"
+      @resized="doUpdatePreviousPaneSize('left')"
     >
       <pane
-        v-show="!collapseLeftPane"
         data-testid="leftPane"
         :size="currentPaneSizes.left"
         class="scrollable-y"
@@ -212,7 +206,11 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
         </slot>
       </pane>
 
-      <pane data-testid="mainPane" :size="usedMainPaneSize" min-size="40">
+      <pane
+        data-testid="mainPane"
+        :size="100 - currentPaneSizes.left"
+        min-size="40"
+      >
         <splitpanes
           data-testid="horizontalSplitpane"
           horizontal
@@ -222,12 +220,12 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
             'down-facing-splitter': !isBottomPaneCollapsed,
             'up-facing-splitter': isBottomPaneCollapsed,
           }"
-          @splitter-click="collapsePane('bottom')"
-          @resize="resizePane($event[1].size, 'bottom')"
+          @splitter-click="doToggleCollapsePane('bottom')"
+          @resize="doResizePane($event[1].size, 'bottom')"
         >
           <pane
             data-testid="topPane"
-            :size="usedVerticalCodeEditorPaneSize"
+            :size="100 - currentPaneSizes.bottom"
             min-size="40"
           >
             <splitpanes
@@ -240,14 +238,16 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
               }"
               :dbl-click-splitter="false"
               @splitter-click="
-                isRightPaneCollapsable ? collapsePane('right') : undefined
+                isRightPaneCollapsable
+                  ? doToggleCollapsePane('right')
+                  : undefined
               "
-              @resized="resizePane($event[1].size, 'right')"
+              @resized="doResizePane($event[1].size, 'right')"
             >
               <pane
                 ref="editorSplitPane"
                 data-testid="editorPane"
-                :size="usedHorizontalCodeEditorPaneSize"
+                :size="100 - currentPaneSizes.right"
                 min-size="25"
               >
                 <div class="editor-and-control-bar">
@@ -276,12 +276,12 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                       <CodeEditorControlBar
                         v-if="showControlBarDynamic"
                         :current-pane-sizes="currentPaneSizes"
-                        :show-button-text="showButtonText"
+                        :show-button-text="shouldShowButtonText"
                       >
                         <template #controls>
                           <slot
                             name="code-editor-controls"
-                            :show-button-text="showButtonText"
+                            :show-button-text="shouldShowButtonText"
                           />
                         </template>
                       </CodeEditorControlBar>
