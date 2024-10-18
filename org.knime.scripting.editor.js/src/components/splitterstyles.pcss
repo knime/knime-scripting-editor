@@ -12,8 +12,9 @@
   }
 }
 
+.common-splitter.disabled-splitter,
 .common-splitter.slim-mode {
-  & :deep(.splitpanes__splitter) {
+  & :deep(> .splitpanes__splitter) {
     display: none;
     pointer-events: none;
   }
