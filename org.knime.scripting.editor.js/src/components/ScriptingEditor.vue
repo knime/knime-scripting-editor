@@ -87,18 +87,18 @@ const editorSplitPaneRef = useElementBounding(editorSplitPane);
 
 // All the logic for resizing panes
 const {
-  collapseAllPanes,
-  collapsePane,
-  collapseLeftPane,
+  doResizePane,
+  doUpdatePreviousPaneSize,
+  doUpdateRightPane,
+  doToggleCollapsePane,
   currentPaneSizes,
+  shouldCollapseAllPanes,
+  shouldCollapseLeftPane,
+  shouldShowButtonText,
   isBottomPaneCollapsed,
   isLeftPaneCollapsed,
   isRightPaneCollapsed,
   minRatioOfRightPaneInPercent,
-  resizePane,
-  updatePreviousPaneSize,
-  updateRightPane,
-  showButtonText,
   usedHorizontalCodeEditorPaneSize,
   usedMainPaneSize,
   usedVerticalCodeEditorPaneSize,
@@ -127,7 +127,7 @@ const onMenuItemClicked = (args: { event: Event; item: SettingsMenuItem }) => {
 
 // Convenient to have this computed property for reactive components
 const showControlBarDynamic = computed(() => {
-  return props.showControlBar && !collapseAllPanes.value;
+  return props.showControlBar && !shouldCollapseAllPanes.value;
 });
 
 // We need either filename+language, or provided editor slot
@@ -157,7 +157,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 <template>
   <div class="layout">
     <HeaderBar
-      v-if="!collapseAllPanes && title !== null"
+      v-if="!shouldCollapseAllPanes && title !== null"
       :title="title!"
       :menu-items="[...commonMenuItems, ...menuItems]"
       @menu-item-click="onMenuItemClicked"
@@ -182,24 +182,24 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
       class="common-splitter unset-transition main-splitpane"
       :dbl-click-splitter="false"
       :class="{
-        'slim-mode': collapseAllPanes,
+        'slim-mode': shouldCollapseAllPanes,
         'left-facing-splitter': !isLeftPaneCollapsed,
         'right-facing-splitter': isLeftPaneCollapsed,
-        'collapse-left-pane': collapseLeftPane,
+        'collapse-left-pane': shouldCollapseLeftPane,
       }"
       @splitter-click="
-        collapsePane('left');
-        updatePreviousPaneSize('right');
+        doToggleCollapsePane('left');
+        doUpdatePreviousPaneSize('right');
       "
       @resize="
-        updateRightPane($event[0].size);
-        resizePane($event[0].size, 'left', false);
-        updatePreviousPaneSize('right');
+        doUpdateRightPane($event[0].size);
+        doResizePane($event[0].size, 'left', false);
+        doUpdatePreviousPaneSize('right');
       "
-      @resized="updatePreviousPaneSize('left')"
+      @resized="doUpdatePreviousPaneSize('left')"
     >
       <pane
-        v-show="!collapseLeftPane"
+        v-show="!shouldCollapseLeftPane"
         data-testid="leftPane"
         :size="currentPaneSizes.left"
         class="scrollable-y"
@@ -222,8 +222,8 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
             'down-facing-splitter': !isBottomPaneCollapsed,
             'up-facing-splitter': isBottomPaneCollapsed,
           }"
-          @splitter-click="collapsePane('bottom')"
-          @resize="resizePane($event[1].size, 'bottom')"
+          @splitter-click="doToggleCollapsePane('bottom')"
+          @resize="doResizePane($event[1].size, 'bottom')"
         >
           <pane
             data-testid="topPane"
@@ -240,9 +240,11 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
               }"
               :dbl-click-splitter="false"
               @splitter-click="
-                isRightPaneCollapsable ? collapsePane('right') : undefined
+                isRightPaneCollapsable
+                  ? doToggleCollapsePane('right')
+                  : undefined
               "
-              @resized="resizePane($event[1].size, 'right')"
+              @resized="doResizePane($event[1].size, 'right')"
             >
               <pane
                 ref="editorSplitPane"
@@ -276,12 +278,12 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                       <CodeEditorControlBar
                         v-if="showControlBarDynamic"
                         :current-pane-sizes="currentPaneSizes"
-                        :show-button-text="showButtonText"
+                        :show-button-text="shouldShowButtonText"
                       >
                         <template #controls>
                           <slot
                             name="code-editor-controls"
-                            :show-button-text="showButtonText"
+                            :show-button-text="shouldShowButtonText"
                           />
                         </template>
                       </CodeEditorControlBar>
