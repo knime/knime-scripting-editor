@@ -179,10 +179,9 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
       class="common-splitter unset-transition main-splitpane"
       :dbl-click-splitter="false"
       :class="{
-        'slim-mode': shouldCollapseAllPanes,
         'left-facing-splitter': !isLeftPaneCollapsed,
         'right-facing-splitter': isLeftPaneCollapsed,
-        'collapse-left-pane': shouldCollapseLeftPane,
+        'disabled-splitter': shouldCollapseLeftPane || shouldCollapseAllPanes,
       }"
       @splitter-click="
         doToggleCollapsePane('left');
@@ -196,7 +195,6 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
       @resized="doUpdatePreviousPaneSize('left')"
     >
       <pane
-        v-show="!shouldCollapseLeftPane"
         data-testid="leftPane"
         :size="currentPaneSizes.left"
         class="scrollable-y"
@@ -222,6 +220,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
           :class="{
             'down-facing-splitter': !isBottomPaneCollapsed,
             'up-facing-splitter': isBottomPaneCollapsed,
+            'disabled-splitter': shouldCollapseAllPanes,
           }"
           @splitter-click="doToggleCollapsePane('bottom')"
           @resize="doResizePane($event[1].size, 'bottom')"
@@ -238,6 +237,7 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                 'slim-splitter': !isRightPaneCollapsable,
                 'left-facing-splitter': isRightPaneCollapsed,
                 'right-facing-splitter': !isRightPaneCollapsed,
+                'disabled-splitter': shouldCollapseAllPanes,
               }"
               :dbl-click-splitter="false"
               @splitter-click="
