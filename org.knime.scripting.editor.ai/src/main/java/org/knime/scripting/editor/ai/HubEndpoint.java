@@ -74,6 +74,11 @@ public interface HubEndpoint {
     boolean isLoggedIn();
 
     /**
+     * @return the disclaimer users have to accept before they can use the code generation AI
+     */
+    String getDisclaimer();
+
+    /**
      * Send a POST request to the provided end point path at the selected KNIME Hub
      *
      * @param endpointPath The end point at the selected KNIME Hub to call

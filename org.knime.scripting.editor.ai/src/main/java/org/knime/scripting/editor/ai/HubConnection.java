@@ -121,6 +121,11 @@ public final class HubConnection implements HubEndpoint { // NOSONAR: singleton 
     }
 
     @Override
+    public String getDisclaimer() {
+        return m_hubEndpoint.getDisclaimer();
+    }
+
+    @Override
     public String sendRequest(final String endpointPath, final Object request) throws IOException {
         return m_hubEndpoint.sendRequest(endpointPath, request);
     }
