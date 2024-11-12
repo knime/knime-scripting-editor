@@ -56,6 +56,12 @@ import java.io.IOException;
  * @author Carsten Haubold, KNIME GmbH, Konstanz, Germany
  */
 public interface HubEndpoint {
+
+    /**
+     * @return whether all K-AI-related features are enabled
+     */
+    boolean isKaiEnabled();
+
     /**
      * @return the ID of the Hub hosting the backend
      */

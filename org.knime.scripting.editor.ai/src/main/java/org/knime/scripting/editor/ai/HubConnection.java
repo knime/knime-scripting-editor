@@ -106,6 +106,11 @@ public final class HubConnection implements HubEndpoint { // NOSONAR: singleton 
     }
 
     @Override
+    public boolean isKaiEnabled() {
+        return m_hubEndpoint.isKaiEnabled();
+    }
+
+    @Override
     public String getHubId() {
         return m_hubEndpoint.getHubId();
     }
