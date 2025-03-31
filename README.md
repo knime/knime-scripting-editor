@@ -11,7 +11,6 @@ This repository is maintained by the [KNIME Team Rakete](mailto:team-rakete@knim
 This repository contains the KNIME Scripting Editor framework. The code is organized as follows:
 
 - _org.knime.scripting.editor:_ Eclipse plugin for common backend functionallity of the scripting editor.
-- _org.knime.scripting.editor.ai:_ Optional utilites for connecting scripting editors to AI assistants.
 - _org.knime.scripting.editor.js:_ Frontend implementation of the scripting editor framework. Published as [@knime/scripting-editor](https://www.npmjs.com/package/@knime/scripting-editor).
 
 ## Development Notes
