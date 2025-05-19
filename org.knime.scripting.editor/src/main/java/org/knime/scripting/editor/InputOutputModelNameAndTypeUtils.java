@@ -51,6 +51,8 @@ package org.knime.scripting.editor;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.knime.scripting.editor.CodeGenerationRequest.NameAndTypeAndValue;
+
 /**
  * Utilities to extract names and types of columns and flow variables in {@link InputOutputModel}s.
  *
@@ -155,17 +157,17 @@ public final class InputOutputModelNameAndTypeUtils {
      * @param models an array of InputOutputModel objects
      * @return a NameAndType array representing the flow variables; an empty array if none found.
      */
-    public static NameAndType[] getSupportedFlowVariables(final InputOutputModel[] models) {
+    public static NameAndTypeAndValue[] getSupportedFlowVariables(final InputOutputModel[] models) {
         InputOutputModel flowVariableModel = Arrays.stream(models)
             .filter(m -> InputOutputModel.FLOW_VAR_PORT_TYPE_NAME.equals(m.portType())).findFirst().orElse(null);
 
         if (flowVariableModel == null || flowVariableModel.subItems() == null) {
-            return new NameAndType[0];
+            return new NameAndTypeAndValue[0];
         }
 
         return Arrays.stream(flowVariableModel.subItems()) //
             .filter(subItem -> subItem.supported()) //
-            .map(subItem -> new NameAndType(subItem.name(), subItem.type())) //
-            .toArray(NameAndType[]::new);
+            .map(subItem -> new NameAndTypeAndValue(subItem.name(), subItem.type(), null)) //
+            .toArray(NameAndTypeAndValue[]::new);
     }
 }

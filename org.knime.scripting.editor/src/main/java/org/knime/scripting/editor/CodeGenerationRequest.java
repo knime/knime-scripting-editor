@@ -65,9 +65,12 @@ public record CodeGenerationRequest(String endpointPath, RequestBody body) {
         }
     }
 
-    public record Inputs(NameAndType[][] tables, long num_objects, NameAndType[] flow_variables) { // NOSONAR: we don't need hash or equals here
+    public record Inputs(NameAndType[][] tables, long num_objects, NameAndTypeAndValue[] flow_variables) { // NOSONAR: we don't need hash or equals here
     }
 
     public record Outputs(long num_tables, long num_objects, long num_images, boolean has_view) {
+    }
+
+    public record NameAndTypeAndValue(String name, String type, String value) {
     }
 }
