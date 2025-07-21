@@ -30,9 +30,10 @@ class EventPoller {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const res = await jsonDataService.data({
+      const res = await jsonDataService.data<{ type: string; data: any }>({
         method: "ScriptingService.getEvent",
       });
+
       if (res) {
         if (res.type in this._eventHandlers) {
           this._eventHandlers[res.type](res.data);
