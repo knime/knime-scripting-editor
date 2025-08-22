@@ -9,6 +9,7 @@ import type { Component } from "vue";
 import Handlebars from "handlebars";
 
 import { Collapser, PortIcon, useMultiSelection } from "@knime/components";
+import { DataType } from "@knime/kds-components";
 import EyeIcon from "@knime/styles/img/icons/eye.svg";
 
 import { insertionEventHelper } from "@/components/utils/insertionEventHelper";
@@ -17,12 +18,18 @@ import { useReadonlyStore } from "@/store/readOnly";
 
 import { createDragGhost, removeDragGhost } from "./utils/dragGhost";
 
+export type SubItemType<DisplayName extends string = string> = {
+  id?: string;
+  title?: string;
+  displayName: DisplayName;
+};
+
 export type SubItem<PropType extends Record<string, any>> = {
   name: string;
   /**
    * The type of the subItem that is displayed in the inputOutputPane
    */
-  type: string;
+  type: SubItemType;
   /**
    * An optional Component that is displayed before the name of the subItem.
    */
@@ -198,8 +205,24 @@ const onSubItemDragStart = (event: DragEvent, index: number) => {
     return;
   }
 
+  const subItemNode = event.currentTarget;
+  let dragGhostContent;
+  if (
+    subItemNode instanceof HTMLElement &&
+    subItemNode.getElementsByClassName("sub-item-icon-name-wrapper")[0]
+  ) {
+    const wrapperElement = subItemNode
+      .getElementsByClassName("sub-item-icon-name-wrapper")[0]
+      .cloneNode(true) as HTMLElement;
+    wrapperElement.classList.remove("sub-item-icon-name-wrapper");
+    dragGhostContent = wrapperElement;
+  } else {
+    dragGhostContent = document.createElement("div");
+    dragGhostContent.textContent = draggedItem.name;
+  }
+
   const dragGhost = createDragGhost({
-    elements: [{ text: draggedItem.name }],
+    elements: [{ dragGhostContent }],
     numSelectedItems: multiSelection.selectedIndexes.value.filter(
       (item) => props.inputOutputItem.subItems?.[item].supported,
     ).length,
@@ -217,8 +240,10 @@ const onSubItemDragEnd = () => {
 const isDraggingHeader = ref(false);
 const onHeaderDragStart = (event: DragEvent, codeAlias: string) => {
   isDraggingHeader.value = true;
+  const el = document.createElement("div");
+  el.innerText = props.inputOutputItem.codeAlias!;
   const dragGhost = createDragGhost({
-    elements: [{ text: props.inputOutputItem.codeAlias! }],
+    elements: [{ dragGhostContent: el }],
     numSelectedItems: 1,
     font: "monospace",
   });
@@ -289,8 +314,7 @@ const globalReadOnly = useReadonlyStore();
         <div v-if="typeof subItem.icon !== 'undefined'" class="sub-item-icon">
           <component :is="subItem.icon.component" v-bind="subItem.icon.props" />
         </div>
-
-        <span
+        <div
           class="sub-item-content"
           :class="{
             draggable:
@@ -311,8 +335,8 @@ const globalReadOnly = useReadonlyStore();
           @click="(event) => handleClick(event, index)"
           @dblclick="handleSubItemDoubleClick($event, index)"
         >
-          <span
-            class="sub-item-name"
+          <div
+            class="sub-item-icon-name-wrapper sub-item-icon-name-wrapper-flex"
             :class="{
               selected:
                 props.inputOutputItem.subItemCodeAliasTemplate &&
@@ -321,12 +345,26 @@ const globalReadOnly = useReadonlyStore();
                 subItem.supported,
             }"
           >
-            {{ subItem.name }}
-          </span>
+            <DataType
+              v-if="subItem.type.id"
+              class="data-type"
+              size="small"
+              :icon-name="subItem.type.id"
+              :icon-title="subItem.type.title"
+            />
+            <DataType
+              v-else-if="subItem.type.displayName === 'UNKNOWN'"
+              class="data-type"
+              size="small"
+            />
+            <span class="sub-item-name">
+              {{ subItem.name }}
+            </span>
+          </div>
           <span class="subitem-type">
-            {{ subItem.type }}
+            {{ subItem.type.displayName }}
           </span>
-        </span>
+        </div>
       </div>
     </div>
   </Collapser>
@@ -459,21 +497,30 @@ const globalReadOnly = useReadonlyStore();
   text-overflow: ellipsis;
 }
 
-.sub-item-name {
-  padding: 2px var(--space-8);
+.sub-item-icon-name-wrapper-flex {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.sub-item-icon-name-wrapper {
   background-color: transparent;
   border-radius: 30px;
   transition: background-color 0.1s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 2px var(--space-8);
 
-  &.selected {
-    background-color: var(--knime-cornflower-semi);
+  .sub-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.selected {
+      background-color: var(--knime-cornflower-semi);
+    }
   }
 }
 
-.sub-item-content:hover .sub-item-name:not(.selected) {
+.sub-item-content:hover .sub-item-icon-name-wrapper:not(.selected) {
   background-color: var(--knime-stone-light);
 }
 
