@@ -23,6 +23,7 @@ import ScriptingEditorBottomPane, {
 } from "./ScriptingEditorBottomPane.vue";
 import type { SettingsMenuItem } from "./SettingsPage.vue";
 import SettingsPage from "./SettingsPage.vue";
+import SplitPanel from "./SplitPanel.vue";
 
 const commonMenuItems: MenuItem[] = [
   // TODO: add actual common menu items
@@ -90,6 +91,9 @@ const rootSplitPane = ref();
 const rootSplitPaneRef = useElementBounding(rootSplitPane);
 const editorSplitPane = ref();
 const editorSplitPaneRef = useElementBounding(editorSplitPane);
+
+// For SplitPanel compatibility - we'll implement proper collapsing in step 1b
+const rightPaneExpanded = ref(true);
 
 // All the logic for resizing panes
 const {
@@ -236,27 +240,22 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
             :size="usedVerticalCodeEditorPaneSize"
             min-size="40"
           >
-            <splitpanes
+            <SplitPanel
+              v-model:expanded="rightPaneExpanded"
+              direction="right"
+              :secondary-min-size="0"
+              :secondary-snap-size="250"
+              :use-pixel="true"
+              splitter-id="verticalSplitpane"
               data-testid="verticalSplitpane"
-              class="common-splitter unset-transition vertical-splitpane"
-              :class="{
-                'slim-splitter': !isRightPaneCollapsable,
-                'left-facing-splitter': isRightPaneCollapsed,
-                'right-facing-splitter': !isRightPaneCollapsed,
-              }"
-              :dbl-click-splitter="false"
-              @splitter-click="
-                isRightPaneCollapsable
-                  ? doToggleCollapsePane('right')
-                  : undefined
-              "
-              @resized="doResizePane($event[1].size, 'right')"
+              class="vertical-splitpanel"
             >
-              <pane
+              <!-- v-model:secondary-size="currentPaneSizes.right" -->
+              <!-- @update:secondary-size="doResizePane($event, 'right')" -->
+              <div
                 ref="editorSplitPane"
                 data-testid="editorPane"
-                :size="usedHorizontalCodeEditorPaneSize"
-                min-size="25"
+                class="editor-pane"
               >
                 <div class="editor-and-control-bar">
                   <div
@@ -296,16 +295,16 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
                     </div>
                   </div>
                 </div>
-              </pane>
-              <pane
-                data-testid="rightPane"
-                :size="currentPaneSizes.right"
-                class="right-pane"
-                :min-size="minRatioOfRightPaneInPercent"
-              >
-                <slot name="right-pane" />
-              </pane>
-            </splitpanes>
+              </div>
+              <template #secondary>
+                <div
+                  data-testid="rightPane"
+                  class="right-pane"
+                >
+                  <slot name="right-pane" />
+                </div>
+              </template>
+            </SplitPanel>
           </pane>
           <pane
             data-testid="bottomPane"
@@ -387,11 +386,32 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
   }
 }
 
-.right-pane {
-  background-color: var(--knime-gray-ultra-light);
+.vertical-splitpanel {
+  height: 100%;
+  width: 100%;
+}
+
+.editor-pane {
+  height: 100%;
+  width: 100%;
 }
 
 .scrollable-y {
   overflow-y: auto;
+}
+
+.vertical-splitpanel {
+  height: 100%;
+  width: 100%;
+}
+
+.editor-pane {
+  height: 100%;
+  width: 100%;
+}
+
+.right-pane {
+  background-color: var(--knime-gray-ultra-light);
+  height: 100%;
 }
 </style>

@@ -15,7 +15,7 @@ type Props = {
   secondarySnapSize?: number;
   secondaryMaxSize?: number;
   usePixel?: boolean;
-  keepElementOnClose?: boolean;
+  keepElementOnClose?: boolean; // TODO why is this called removeElementOnClose in the defaults??
   splitterId?: string;
 };
 
@@ -198,10 +198,9 @@ watch(
 </template>
 
 <style lang="postcss" scoped>
-@import url("@/assets/mixins.css");
-
 .switch-icon {
-  @mixin svg-icon-size 10;
+  width: 10px;
+  height: 10px;
 
   stroke: var(--knime-masala);
   position: relative;
@@ -266,7 +265,7 @@ watch(
       left: 0;
       top: 0;
       opacity: 0;
-      z-index: v-bind("$zIndices.layerStaticPanelDecorations");
+      z-index: 100; /* TODO: replace with actual z-index */
     }
   }
 
@@ -351,7 +350,7 @@ watch(
     width: 100%;
     height: 100%;
     background-color: var(--will-snap-background-color);
-    z-index: v-bind("$zIndices.layerStaticPanelDecorations");
+    z-index: 100; /* TODO: replace with actual z-index */
     overflow: hidden;
     white-space: nowrap;
   }
