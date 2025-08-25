@@ -30,7 +30,7 @@ import type {
   UseDiffEditorReturn,
 } from "@/editor";
 import editor from "@/editor";
-import { init } from "@/init";
+import { type InitMockData, init, initMocked } from "@/init";
 import {
   type GenericInitialData,
   type InitialDataServiceType,
@@ -62,6 +62,7 @@ export {
   getSettingsService,
   init,
   initConsoleEventHandler,
+  initMocked,
   InputOutputPane,
   insertionEventHelper,
   MIN_WIDTH_FOR_DISPLAYING_LEFT_PANE,
@@ -80,14 +81,15 @@ export type {
   GenericInitialData,
   GenericNodeSettings,
   InitialDataServiceType,
-  SubItem,
+  InitMockData,
+  InputConnectionInfo,
   InputOutputModel,
   InsertionEvent,
   KAIConfig,
   PortConfigs,
-  InputConnectionInfo,
   ScriptingServiceType,
   SettingsMenuItem,
+  SubItem,
   UseCodeEditorParams,
   UseCodeEditorReturn,
   UseDiffEditorParams,
