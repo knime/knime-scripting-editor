@@ -16,11 +16,8 @@ import WarningIcon from "@knime/styles/img/icons/circle-warning.svg";
 import SendIcon from "@knime/styles/img/icons/paper-flier.svg";
 
 import InfinityLoadingBar from "@/components/InfinityLoadingBar.vue";
-import { getScriptingService } from "@/init";
-import {
-  type GenericInitialData,
-  getInitialDataService,
-} from "@/initial-data-service";
+import { getScriptingService, getInitialDataService } from "@/init";
+import { type GenericInitialData } from "@/initial-data-service";
 import { getSettingsService } from "@/init";
 import {
   type Message,

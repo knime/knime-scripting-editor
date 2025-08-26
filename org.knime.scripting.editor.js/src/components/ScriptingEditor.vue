@@ -9,7 +9,7 @@ import type { MenuItem } from "@knime/components";
 import type { InputOutputModel } from "@/components/InputOutputItem.vue";
 import { type PaneSizes } from "@/components/utils/paneSizes";
 import { useResizeLogic } from "@/components/utils/resizeLogic";
-import { getInitialDataService } from "@/initial-data-service";
+import { getInitialDataService } from "@/init";
 import { type GenericNodeSettings } from "@/settings-service";
 
 import CodeEditorControlBar from "./CodeEditorControlBar.vue";
