@@ -5,8 +5,8 @@ import { useElementBounding } from "@vueuse/core";
 import { Pane, type PaneProps, Splitpanes } from "splitpanes";
 
 import { defaultPortConfig } from "@/__mocks__/scripting-service";
+import { getScriptingService } from "@/init";
 import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
-import { getScriptingService } from "@/scripting-service";
 import {
   DEFAULT_INITIAL_SETTINGS,
   registerSettingsMock,
