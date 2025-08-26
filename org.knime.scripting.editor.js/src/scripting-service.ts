@@ -2,7 +2,7 @@ import type { JsonDataService } from "@knime/ui-extension-service";
 
 import { consoleHandler } from "./consoleHandler";
 import { useMainCodeEditorStore } from "./editor";
-import { type PortConfig, type ScriptingServiceType, scriptingService } from "./init";
+import { type PortConfig, ScriptingServiceType, getScriptingService } from "./init";
 import { MonacoLSPConnection } from "./lsp/connection";
 import { KnimeMessageReader, KnimeMessageWriter } from "./lsp/knime-io";
 
@@ -126,11 +126,7 @@ export class ScriptingService {
   }
 }
 
-// TODO move this to `init.ts` but move the implementation here
-//   init.ts should handle the application state
-//   scripting-service should be implemented here (but only initialized from `init.ts`)
-export const getScriptingService = (): ScriptingServiceType => scriptingService;
-
+// TODO move?
 export const initConsoleEventHandler = () => {
   getScriptingService().registerEventHandler("console", consoleHandler.write);
 };

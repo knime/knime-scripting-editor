@@ -164,7 +164,9 @@ class SettingsHelper {
 
 // --- INSTANCES ---
 
-export let scriptingService: ScriptingServiceType;
+let scriptingService: ScriptingServiceType;
+export const getScriptingService = (): ScriptingServiceType => scriptingService;
+
 export let initialDataService: InitialDataServiceType;
 export let settingsService: SettingsServiceType;
 

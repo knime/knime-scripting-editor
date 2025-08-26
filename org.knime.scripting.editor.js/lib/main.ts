@@ -30,7 +30,12 @@ import type {
   UseDiffEditorReturn,
 } from "@/editor";
 import editor from "@/editor";
-import { type InitMockData, init, initMocked } from "@/init";
+import {
+  type InitMockData,
+  getScriptingService,
+  init,
+  initMocked,
+} from "@/init";
 import {
   type GenericInitialData,
   type InitialDataServiceType,
@@ -41,7 +46,6 @@ import {
 } from "@/initial-data-service";
 import {
   type ScriptingServiceType,
-  getScriptingService,
   initConsoleEventHandler,
 } from "@/scripting-service";
 import {
