@@ -33,6 +33,7 @@ import type {
 import editor from "@/editor";
 import {
   type InitMockData,
+  getInitialDataService,
   getScriptingService,
   getSettingsService,
   init,
@@ -44,7 +45,6 @@ import {
   type InputConnectionInfo,
   type KAIConfig,
   type PortConfigs,
-  getInitialDataService,
 } from "@/initial-data-service";
 import {
   type ScriptingServiceType,
