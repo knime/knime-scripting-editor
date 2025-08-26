@@ -1,12 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { JsonDataService } from "@knime/ui-extension-service";
 
 import { consoleHandler } from "./consoleHandler";
 import { useMainCodeEditorStore } from "./editor";
-import { type PortConfig, ScriptingServiceType, getScriptingService } from "./init";
+import { type PortConfig, getScriptingService } from "./init";
 import { MonacoLSPConnection } from "./lsp/connection";
 import { KnimeMessageReader, KnimeMessageWriter } from "./lsp/knime-io";
-
-export type { ScriptingServiceType };
 
 type LanguageServerStatus = { status: "RUNNING" | "ERROR"; message?: string };
 
@@ -125,6 +124,22 @@ export class ScriptingService {
     return this.sendToService("getAiDisclaimer");
   }
 }
+
+/**
+ * Type representing the public API of ScriptingService.
+ * Automatically excludes private members and constructor.
+ * Use this type for mocking and ensuring type safety.
+ */
+export type ScriptingServiceType = Pick<
+  ScriptingService,
+  {
+    [K in keyof ScriptingService]: ScriptingService[K] extends (
+      ...args: any[]
+    ) => any
+      ? K
+      : never;
+  }[keyof ScriptingService]
+>;
 
 // TODO move?
 export const initConsoleEventHandler = () => {

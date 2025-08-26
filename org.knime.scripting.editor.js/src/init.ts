@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   DialogService,
   JsonDataService,
@@ -8,22 +7,12 @@ import {
 import type { InputOutputModel } from "@/components/InputOutputItem.vue";
 
 import { displayMode } from "./display-mode";
-import { MonacoLSPConnection } from "./lsp/connection";
-import { ScriptingService } from "./scripting-service";
+import {
+  ScriptingService,
+  type ScriptingServiceType,
+} from "./scripting-service";
 
 // --- TYPES ---
-
-type LanguageServerStatus = { status: "RUNNING" | "ERROR"; message?: string };
-
-export type ScriptingServiceType = {
-  sendToService(methodName: string, options?: any[] | undefined): Promise<any>;
-  registerEventHandler(type: string, handler: (args: any) => void): void;
-  connectToLanguageServer(): Promise<MonacoLSPConnection>;
-  isCallKnimeUiApiAvailable(portToTestFor: PortConfig): Promise<boolean>;
-  isKaiEnabled(): Promise<boolean>;
-  isLoggedIntoHub(): Promise<boolean>;
-  getAiDisclaimer(): Promise<string>;
-};
 
 export type PortViewConfig = {
   label: string;
@@ -74,6 +63,7 @@ export type GenericInitialData = {
 };
 
 export type GenericNodeSettings = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   settingsAreOverriddenByFlowVariable?: boolean;
 };
