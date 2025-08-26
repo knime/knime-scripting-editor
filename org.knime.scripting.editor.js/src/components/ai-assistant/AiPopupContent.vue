@@ -21,7 +21,7 @@ import {
   type GenericInitialData,
   getInitialDataService,
 } from "@/initial-data-service";
-import { getSettingsService } from "@/settings-service";
+import { getSettingsService } from "@/init";
 import {
   type Message,
   type PromptResponseStore,

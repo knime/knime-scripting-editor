@@ -5,11 +5,9 @@ import { onKeyStroke } from "@vueuse/core";
 import { COLUMN_INSERTION_EVENT } from "@/components/InputOutputItem.vue";
 import { insertionEventHelper } from "@/components/utils/insertionEventHelper";
 import { useMainCodeEditor } from "@/editor";
-import {
-  type GenericNodeSettings,
-  getSettingsService,
-} from "@/settings-service";
+import { type GenericNodeSettings } from "@/settings-service";
 import { useReadonlyStore } from "@/store/readOnly";
+import { getSettingsService } from "@/init";
 
 interface Props {
   showControlBar: boolean;
