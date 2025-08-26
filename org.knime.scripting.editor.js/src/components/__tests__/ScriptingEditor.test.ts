@@ -4,13 +4,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { useElementBounding } from "@vueuse/core";
 import { Pane, type PaneProps, Splitpanes } from "splitpanes";
 
-import { defaultPortConfig } from "@/__mocks__/scripting-service";
 import { getScriptingService } from "@/init";
-import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
-import {
-  DEFAULT_INITIAL_SETTINGS,
-  registerSettingsMock,
-} from "@/settings-service-browser-mock";
 import CodeEditorControlBar from "../CodeEditorControlBar.vue";
 import InputOutputPane from "../InputOutputPane.vue";
 import MainEditorPane from "../MainEditorPane.vue";
@@ -23,6 +17,29 @@ import {
   MIN_WIDTH_FOR_DISPLAYING_LEFT_PANE,
   MIN_WIDTH_FOR_DISPLAYING_PANES,
 } from "../utils/paneSizes";
+
+const PORT_CONFIG = {
+  inputPorts: [
+    {
+      nodeId: "root",
+      portName: "firstPort",
+      portIdx: 1,
+      portViewConfigs: [
+        { portViewIdx: 0, label: "firstView" },
+        { portViewIdx: 1, label: "secondView" },
+      ],
+    },
+    {
+      nodeId: "notRoot",
+      portName: "firstPort",
+      portIdx: 1,
+      portViewConfigs: [
+        { portViewIdx: 0, label: "firstView" },
+        { portViewIdx: 1, label: "secondView" },
+      ],
+    },
+  ],
+};
 
 const mocks = vi.hoisted(() => {
   return {
@@ -39,24 +56,7 @@ vi.mock("@vueuse/core", async (importOriginal) => {
   };
 });
 
-vi.mock("@/scripting-service");
 vi.mock("@/editor");
-
-vi.mock("@/settings-service", () => ({
-  getSettingsService: vi.fn(() => ({
-    getSettings: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_SETTINGS)),
-    registerSettingsGetterForApply: vi.fn(() => Promise.resolve()),
-    registerSettings: vi.fn(registerSettingsMock),
-  })),
-}));
-
-vi.mock("@/initial-data-service", () => ({
-  getInitialDataService: vi.fn(() => ({
-    getInitialData: vi.fn(() => Promise.resolve(DEFAULT_INITIAL_DATA)),
-  })),
-}));
-
-vi.mock("@/display-mode", () => ({ displayMode: ref("large") }));
 
 describe("ScriptingEditor", () => {
   beforeEach(() => {
@@ -497,7 +497,7 @@ describe("ScriptingEditor", () => {
     ): BottomPaneTabSlotName => `bottomPaneTabSlot:${nodeId}-${portIdx}`;
     const tabElements = wrapper.findAll(".tab-bar input");
 
-    for (const inputPort of defaultPortConfig.inputPorts) {
+    for (const inputPort of PORT_CONFIG.inputPorts) {
       const expectedElement = tabElements.find(
         (tab) =>
           tab.attributes("value") ===
