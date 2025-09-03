@@ -2,7 +2,7 @@
 import { computed, reactive, ref, useSlots } from "vue";
 import { computedAsync, useElementBounding } from "@vueuse/core";
 
-import { type MenuItem, SplitPanel } from "@knime/components";
+import { type MenuItem } from "@knime/components";
 import "@knime/kds-styles/kds-variables.css";
 
 import type { InputOutputModel } from "@/components/InputOutputItem.vue";
@@ -25,6 +25,7 @@ import ScriptingEditorBottomPane, {
 } from "./ScriptingEditorBottomPane.vue";
 import type { SettingsMenuItem } from "./SettingsPage.vue";
 import SettingsPage from "./SettingsPage.vue";
+import SplitPanel from "./splitter/SplitPanel.vue";
 
 const commonMenuItems: MenuItem[] = [
   // TODO: add actual common menu items

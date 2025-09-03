@@ -3,8 +3,6 @@ import { nextTick, ref } from "vue";
 import { flushPromises, mount } from "@vue/test-utils";
 import { useElementBounding } from "@vueuse/core";
 
-import { SplitPanel } from "@knime/components";
-
 import { defaultPortConfig } from "@/__mocks__/scripting-service";
 import { DEFAULT_INITIAL_DATA } from "@/initial-data-service-browser-mock";
 import { getScriptingService } from "@/scripting-service";
@@ -20,6 +18,7 @@ import ScriptingEditorBottomPane, {
   type BottomPaneTabSlotName,
 } from "../ScriptingEditorBottomPane.vue";
 import SettingsPage from "../SettingsPage.vue";
+import SplitPanel from "../splitter/SplitPanel.vue";
 import { MIN_WIDTH_FOR_DISPLAYING_LEFT_PANE } from "../utils/paneSizes";
 
 const mocks = vi.hoisted(() => {
