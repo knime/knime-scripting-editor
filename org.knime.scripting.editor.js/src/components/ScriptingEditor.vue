@@ -378,6 +378,7 @@ const showControlBarDynamic = computed(() => {
   overflow-y: auto;
 }
 
+/** TODO do we need these deep styles???????????? */
 .allow-splitter-overflow-right-pane {
   overflow: visible;
   min-height: 0;
