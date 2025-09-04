@@ -165,19 +165,6 @@ const showButtonText = computed(
     editorSplitPaneRef.width.value >= MIN_WIDTH_FOR_SHOWING_BUTTON_TEXT,
 );
 
-// TODO this code seems wrong, as it only collapses but does not expand
-// watch(
-//   isSmallEmbeddedMode,
-//   (newVal) => {
-//     if (newVal) {
-//       rightPaneExpanded.value = false;
-//       leftPaneExpanded.value = false;
-//       bottomPaneExpanded.value = false;
-//     }
-//   },
-//   { immediate: true },
-// );
-
 // The control bar is show if set in props and not in small mode
 const showControlBarDynamic = computed(() => {
   return props.showControlBar && !isSmallEmbeddedMode.value;
