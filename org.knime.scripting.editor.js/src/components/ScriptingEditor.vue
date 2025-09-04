@@ -125,36 +125,22 @@ const defaultInputOutputItems = computedAsync<InputOutputModel[]>(async () => {
 
 // #region ================= PANE SIZES ====================
 
+const isSmallEmbeddedMode = computed(() => displayMode.value === "small");
+
 // We need to track the expanded state of each pane (otherwise they won't be collapsible)
 const rightPaneExpanded = ref(true);
 const leftPaneExpanded = ref(true);
 const bottomPaneExpanded = ref(true);
 
-const isSmallEmbeddedMode = computed(() => displayMode.value === "small");
-
-// TODO this seems unnecessarily complex - there are v-models
-const largeModePaneSizes = reactive<PaneSizes>({
-  left: props.initialPaneSizes.left,
-  right: props.initialPaneSizes.right,
-  bottom: props.initialPaneSizes.bottom,
-});
-
-const currentPaneSizes = computed(() => {
-  if (isSmallEmbeddedMode.value) {
-    return {
-      left: 0,
-      right: 0,
-      bottom: 0,
-    };
-  } else {
-    return {
-      ...largeModePaneSizes,
-    };
-  }
-});
-const doResizePane = (size: number, pane: keyof PaneSizes) => {
-  largeModePaneSizes[pane] = size;
-};
+// Keep track of the pane sizes so we can pass them to components that need to know them
+const rightPaneSize = ref<number>(props.initialPaneSizes.right);
+const leftPaneSize = ref<number>(props.initialPaneSizes.left);
+const bottomPaneSize = ref<number>(props.initialPaneSizes.bottom);
+const currentPaneSizes = computed(() => ({
+  left: leftPaneSize.value,
+  right: rightPaneSize.value,
+  bottom: bottomPaneSize.value,
+}));
 
 // Determine if the editor is wide enough to show the button text in the control bar
 const editorSplitPane = ref();
@@ -196,14 +182,13 @@ const showControlBarDynamic = computed(() => {
 
     <SplitPanel
       v-model:expanded="leftPaneExpanded"
+      v-model:secondary-size="leftPaneSize"
       :hide-secondary-pane="isSmallEmbeddedMode"
       direction="left"
       use-pixel
       keep-element-on-close
       :secondary-snap-size="180"
-      :secondary-size="initialPaneSizes.left"
       class="vertical-splitpanel allow-splitter-overflow-right-pane"
-      @update:secondary-size="doResizePane($event as number, 'left')"
     >
       <template #secondary>
         <slot name="left-pane">
@@ -216,27 +201,25 @@ const showControlBarDynamic = computed(() => {
 
       <SplitPanel
         v-model:expanded="bottomPaneExpanded"
+        v-model:secondary-size="bottomPaneSize"
         :hide-secondary-pane="isSmallEmbeddedMode"
         direction="down"
         use-pixel
         keep-element-on-close
-        :secondary-snap-size="300"
-        :secondary-size="initialPaneSizes.bottom"
+        :secondary-snap-size="200"
         class="horizontal-splitpanel allow-splitter-overflow-top-pane"
-        @update:secondary-size="doResizePane($event as number, 'bottom')"
       >
         <SplitPanel
           v-model:expanded="rightPaneExpanded"
+          v-model:secondary-size="rightPaneSize"
           :hide-secondary-pane="isSmallEmbeddedMode"
           direction="right"
           :secondary-snap-size="220"
-          :secondary-size="initialPaneSizes.right"
           use-pixel
           keep-element-on-close
           splitter-id="verticalSplitpane"
           data-testid="verticalSplitpane"
           class="vertical-splitpanel allow-splitter-overflow-left-pane"
-          @update:secondary-size="doResizePane($event as number, 'right')"
         >
           <div
             ref="editorSplitPane"
