@@ -33,7 +33,6 @@ initMocked({
     sendToService: vi.fn(),
     registerEventHandler: vi.fn(),
     connectToLanguageServer: vi.fn(),
-    isCallKnimeUiApiAvailable: vi.fn(() => Promise.resolve(true)),
     isKaiEnabled: vi.fn(() => Promise.resolve(true)),
     isLoggedIntoHub: vi.fn(() => Promise.resolve(true)),
     getAiDisclaimer: vi.fn(() => Promise.resolve("AI Disclaimer")),
@@ -46,6 +45,9 @@ initMocked({
       (_settingsGetter: () => GenericNodeSettings) => {},
     ),
     registerSettings: vi.fn(() => vi.fn()),
+  },
+  serviceCapabilities: {
+    isUiApiAvailable: true,
   },
   displayMode: "large",
 });

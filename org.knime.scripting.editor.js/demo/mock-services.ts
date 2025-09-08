@@ -1,3 +1,5 @@
+import type { InitMockData } from "lib/main";
+
 import { createScriptingServiceMock } from "../src/scripting-service-browser-mock";
 import { createSettingsServiceMock } from "../src/settings-service-browser-mock";
 
@@ -41,5 +43,6 @@ export default {
   scriptingService,
   initialData: DEFAULT_INITIAL_DATA,
   settingsService,
+  serviceCapabilities: { isUiApiAvailable: true },
   displayMode: "large" as const,
-};
+} satisfies InitMockData;

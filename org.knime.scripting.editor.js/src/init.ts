@@ -13,6 +13,12 @@ import {
   type SettingsServiceType,
 } from "./settings-service";
 
+// --- TYPES ---
+
+export type ServiceCapabilities = {
+  isUiApiAvailable: boolean;
+};
+
 // --- INSTANCES ---
 
 let scriptingService: ScriptingServiceType;
@@ -23,6 +29,10 @@ export const getInitialData = (): GenericInitialData => initialData;
 
 let settingsService: SettingsServiceType;
 export const getSettingsService = (): SettingsServiceType => settingsService;
+
+let serviceCapabilities: ServiceCapabilities;
+export const getServiceCapabilities = (): ServiceCapabilities =>
+  serviceCapabilities;
 
 // --- INIT FUNCTION ---
 
@@ -61,6 +71,38 @@ export const init = async () => {
   dialogService.addOnDisplayModeChangeCallback(({ mode }) => {
     displayMode.value = mode;
   });
+
+  // Check UI API availability using the first input port
+  let isUiApiAvailable = false;
+  const inputPorts =
+    initialData.inputPortConfigs?.inputPorts?.filter(
+      (port) => port.nodeId !== null,
+    ) || [];
+
+  if (inputPorts.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseService = (jsonDataService as any).baseService;
+    if (baseService !== null) {
+      try {
+        const result = await baseService.callKnimeUiApi!(
+          "PortService.getPortView",
+          {
+            nodeId: inputPorts[0].nodeId,
+            portIdx: inputPorts[0].portIdx,
+            viewIdx: inputPorts[0].portViewConfigs[0]?.portViewIdx,
+          },
+        );
+        isUiApiAvailable = result.isSome;
+      } catch {
+        // If the call fails, UI API is not available
+        isUiApiAvailable = false;
+      }
+    }
+  }
+
+  serviceCapabilities = {
+    isUiApiAvailable,
+  };
 };
 
 // Alternative that uses a mock
@@ -68,6 +110,7 @@ export type InitMockData = {
   scriptingService?: ScriptingServiceType;
   initialData?: GenericInitialData;
   settingsService?: SettingsServiceType;
+  serviceCapabilities?: ServiceCapabilities;
   displayMode?: "small" | "large";
 };
 
@@ -80,6 +123,9 @@ export const initMocked = (mockData: InitMockData) => {
   }
   if (mockData.settingsService) {
     settingsService = mockData.settingsService;
+  }
+  if (mockData.serviceCapabilities) {
+    serviceCapabilities = mockData.serviceCapabilities;
   }
   if (mockData.displayMode) {
     displayMode.value = mockData.displayMode;

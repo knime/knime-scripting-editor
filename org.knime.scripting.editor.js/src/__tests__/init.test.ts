@@ -4,39 +4,46 @@ import { displayMode } from "@/display-mode";
 import {
   getInitialData,
   getScriptingService,
+  getServiceCapabilities,
   getSettingsService,
   init,
 } from "@/init";
 
-const { dialogServiceInstance, jsonDataServiceInstance } = vi.hoisted(() => {
-  const dialogServiceInstance = {
-    setApplyListener: vi.fn(),
-    getInitialDisplayMode: vi.fn(),
-    addOnDisplayModeChangeCallback: vi.fn(),
-  };
+const { dialogServiceInstance, jsonDataServiceInstance, mockBaseService } =
+  vi.hoisted(() => {
+    const dialogServiceInstance = {
+      setApplyListener: vi.fn(),
+      getInitialDisplayMode: vi.fn(),
+      addOnDisplayModeChangeCallback: vi.fn(),
+    };
 
-  const jsonDataServiceInstance = {
-    initialData: vi.fn(),
-    data: vi.fn(),
-  };
+    const mockBaseService = {
+      callKnimeUiApi: vi.fn(),
+    };
 
-  vi.resetModules();
-  vi.doMock("@knime/ui-extension-service", () => ({
-    JsonDataService: {
-      getInstance: vi.fn(() => Promise.resolve(jsonDataServiceInstance)),
-    },
-    DialogService: {
-      getInstance: vi.fn(() => Promise.resolve(dialogServiceInstance)),
-    },
-  }));
+    const jsonDataServiceInstance = {
+      initialData: vi.fn(),
+      data: vi.fn(),
+      baseService: mockBaseService,
+    };
 
-  vi.doMock("@/scripting-service", () => {
-    class MockScriptingService {}
-    return { ScriptingService: MockScriptingService };
+    vi.resetModules();
+    vi.doMock("@knime/ui-extension-service", () => ({
+      JsonDataService: {
+        getInstance: vi.fn(() => Promise.resolve(jsonDataServiceInstance)),
+      },
+      DialogService: {
+        getInstance: vi.fn(() => Promise.resolve(dialogServiceInstance)),
+      },
+    }));
+
+    vi.doMock("@/scripting-service", () => {
+      class MockScriptingService {}
+      return { ScriptingService: MockScriptingService };
+    });
+
+    return { dialogServiceInstance, jsonDataServiceInstance, mockBaseService };
   });
-
-  return { dialogServiceInstance, jsonDataServiceInstance };
-});
 
 const mockInitialData = {
   initialData: {
@@ -95,6 +102,7 @@ describe("init", () => {
       expect(getScriptingService()).toBeDefined();
       expect(getSettingsService()).toBeDefined();
       expect(getInitialData()).toBeDefined();
+      expect(getServiceCapabilities()).toBeDefined();
     });
   });
 
@@ -193,6 +201,158 @@ describe("init", () => {
       const retrievedSettings = settingsService.getSettings();
 
       expect(retrievedSettings).toEqual(customSettings);
+    });
+  });
+
+  describe("service capabilities", () => {
+    it("sets UI API as unavailable when no input ports exist", async () => {
+      const mockData = {
+        initialData: {
+          ...mockInitialData.initialData,
+          inputPortConfigs: {
+            inputPorts: [],
+          },
+        },
+        settings: mockInitialData.settings,
+      };
+
+      jsonDataServiceInstance.initialData.mockResolvedValue(mockData);
+
+      await init();
+
+      const serviceCapabilities = getServiceCapabilities();
+      expect(serviceCapabilities.isUiApiAvailable).toBe(false);
+    });
+
+    it("sets UI API as unavailable when input ports have no valid nodes", async () => {
+      const mockData = {
+        initialData: {
+          ...mockInitialData.initialData,
+          inputPortConfigs: {
+            inputPorts: [
+              {
+                nodeId: null,
+                portIdx: 0,
+                portViewConfigs: [{ portViewIdx: 0 }],
+              },
+            ],
+          },
+        },
+        settings: mockInitialData.settings,
+      };
+
+      jsonDataServiceInstance.initialData.mockResolvedValue(mockData);
+
+      await init();
+
+      const serviceCapabilities = getServiceCapabilities();
+      expect(serviceCapabilities.isUiApiAvailable).toBe(false);
+    });
+
+    it("sets UI API as available when UI API call succeeds with isSome=true", async () => {
+      const mockData = {
+        initialData: {
+          inputPortConfigs: {
+            ...mockInitialData.initialData,
+            inputPorts: [
+              {
+                nodeId: null, // This should be skipped
+                portIdx: 0,
+                portViewConfigs: [{ portViewIdx: 0 }],
+              },
+              {
+                nodeId: "valid-node-id", // This should be used
+                portIdx: 1,
+                portViewConfigs: [{ portViewIdx: 3 }],
+              },
+              {
+                nodeId: "another-node-id", // This should not be reached
+                portIdx: 2,
+                portViewConfigs: [{ portViewIdx: 1 }],
+              },
+            ],
+          },
+        },
+        settings: mockInitialData.settings,
+      };
+
+      jsonDataServiceInstance.initialData.mockResolvedValue(mockData);
+      mockBaseService.callKnimeUiApi.mockResolvedValue({ isSome: true });
+
+      await init();
+
+      const serviceCapabilities = getServiceCapabilities();
+      expect(serviceCapabilities.isUiApiAvailable).toBe(true);
+      expect(mockBaseService.callKnimeUiApi).toHaveBeenCalledWith(
+        "PortService.getPortView",
+        {
+          nodeId: "valid-node-id",
+          portIdx: 1,
+          viewIdx: 3,
+        },
+      );
+    });
+
+    it("sets UI API as unavailable when UI API call succeeds with isSome=false", async () => {
+      const mockData = {
+        initialData: {
+          ...mockInitialData.initialData,
+          inputPortConfigs: {
+            inputPorts: [
+              {
+                nodeId: "node-456",
+                portIdx: 1,
+                portViewConfigs: [{ portViewIdx: 2 }],
+              },
+            ],
+          },
+        },
+        settings: mockInitialData.settings,
+      };
+
+      jsonDataServiceInstance.initialData.mockResolvedValue(mockData);
+      mockBaseService.callKnimeUiApi.mockResolvedValue({ isSome: false });
+
+      await init();
+
+      const serviceCapabilities = getServiceCapabilities();
+      expect(serviceCapabilities.isUiApiAvailable).toBe(false);
+      expect(mockBaseService.callKnimeUiApi).toHaveBeenCalledWith(
+        "PortService.getPortView",
+        {
+          nodeId: "node-456",
+          portIdx: 1,
+          viewIdx: 2,
+        },
+      );
+    });
+
+    it("sets UI API as unavailable when UI API call throws an error", async () => {
+      const mockData = {
+        initialData: {
+          ...mockInitialData.initialData,
+          inputPortConfigs: {
+            inputPorts: [
+              {
+                nodeId: "node-789",
+                portIdx: 0,
+                portViewConfigs: [{ portViewIdx: 0 }],
+              },
+            ],
+          },
+        },
+        settings: mockInitialData.settings,
+      };
+
+      jsonDataServiceInstance.initialData.mockResolvedValue(mockData);
+      mockBaseService.callKnimeUiApi.mockRejectedValue(
+        new Error("API call failed"),
+      );
+
+      await init();
+
+      const serviceCapabilities = getServiceCapabilities();
+      expect(serviceCapabilities.isUiApiAvailable).toBe(false);
     });
   });
 });

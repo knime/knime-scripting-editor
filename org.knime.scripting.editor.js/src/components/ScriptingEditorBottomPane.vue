@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { type Ref, computed } from "vue";
-import { computedAsync } from "@vueuse/core";
-
 import CompactTabBar from "@/components/CompactTabBar.vue";
 import useShouldFocusBePainted from "@/components/utils/shouldFocusBePainted";
-import { getInitialData, getScriptingService } from "@/init";
+import { getInitialData, getServiceCapabilities } from "@/init";
 import { type PortConfig, type PortConfigs } from "@/initial-data-service";
 
 import InputPortTables from "./InputPortTables.vue";
@@ -42,47 +39,29 @@ const makeGrabFocusFunction = (tabValue: string) => {
   };
 };
 
-const portConfigs: Ref<PortConfigs> = computedAsync(
-  async () => {
-    const inputPorts = getInitialData().inputPortConfigs.inputPorts.filter(
-      (port) => port.nodeId !== null,
-    );
-
-    if (
-      !(await getScriptingService().isCallKnimeUiApiAvailable(inputPorts[0]))
-    ) {
-      return {
-        inputPorts: [],
-      };
+const portConfigs: PortConfigs = getServiceCapabilities().isUiApiAvailable
+  ? {
+      inputPorts: getInitialData().inputPortConfigs.inputPorts.filter(
+        (port) => port.nodeId !== null,
+      ),
     }
+  : { inputPorts: [] };
 
-    return {
-      inputPorts,
-    };
-  },
-  {
-    inputPorts: [],
-  },
-);
+const portConfigTabBarOpts: SlottedTab[] = portConfigs.inputPorts
+  .slice()
+  .reverse()
+  .map((port, index) => ({
+    slotName: makeNodePortIdFromPort(port),
+    label: `${index}: ${port.portName}`,
+  }));
 
-const portConfigTabBarOpts: Ref<SlottedTab[]> = computed(() => {
-  return portConfigs.value.inputPorts
-    .slice()
-    .reverse()
-    .map((port, index) => ({
-      slotName: makeNodePortIdFromPort(port),
-      label: `${index}: ${port.portName}`,
-    }));
-});
-
-const allPossibleTabvalues = computed(() => {
-  return [...portConfigTabBarOpts.value, ...props.slottedTabs].map(
-    (slottedTab: SlottedTab) => ({
-      value: slottedTab.slotName,
-      label: slottedTab.label,
-    }),
-  );
-});
+const allPossibleTabvalues = [
+  ...portConfigTabBarOpts,
+  ...props.slottedTabs,
+].map((slottedTab: SlottedTab) => ({
+  value: slottedTab.slotName,
+  label: slottedTab.label,
+}));
 </script>
 
 <template>

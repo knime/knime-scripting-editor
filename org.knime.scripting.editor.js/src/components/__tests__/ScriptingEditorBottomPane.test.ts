@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import { flushPromises, mount } from "@vue/test-utils";
 
-import { getScriptingService } from "@/init";
+import { initMocked } from "@/init";
 import { type ConsoleHandler } from "../OutputConsole.vue";
 import ScriptingEditorBottomPane from "../ScriptingEditorBottomPane.vue";
 
@@ -47,9 +47,7 @@ describe("ScriptingEditorBottomPane", () => {
   };
 
   beforeEach(() => {
-    vi.mocked(getScriptingService().isCallKnimeUiApiAvailable).mockReturnValue(
-      Promise.resolve(false),
-    );
+    initMocked({ serviceCapabilities: { isUiApiAvailable: false } });
   });
 
   afterEach(() => {

@@ -2,7 +2,6 @@
 import type { JsonDataService } from "@knime/ui-extension-service";
 
 import { useMainCodeEditorStore } from "./editor";
-import type { PortConfig } from "./initial-data-service";
 import { MonacoLSPConnection } from "./lsp/connection";
 import { KnimeMessageReader, KnimeMessageWriter } from "./lsp/knime-io";
 import type { PublicAPI } from "./types/public-api";
@@ -97,24 +96,6 @@ export class ScriptingService {
     } else {
       throw Error(status.message ?? "Starting the language server failed");
     }
-  }
-
-  // TODO inline this check into the init function
-  // Parameters need to be a valid port config, otherwise the call will fail
-  // even when callKnimeUiApi is available
-  async isCallKnimeUiApiAvailable(portToTestFor: PortConfig): Promise<boolean> {
-    const baseService = (this.jsonDataService as any).baseService;
-    if (baseService === null) {
-      return false;
-    }
-
-    return (
-      await baseService.callKnimeUiApi!("PortService.getPortView", {
-        nodeId: portToTestFor.nodeId,
-        portIdx: portToTestFor.portIdx,
-        viewIdx: portToTestFor.portViewConfigs[0]?.portViewIdx,
-      })
-    ).isSome;
   }
 
   isKaiEnabled(): Promise<boolean> {
