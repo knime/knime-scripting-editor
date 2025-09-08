@@ -73,6 +73,12 @@ export class ScriptingService {
     });
   }
 
+  getOutputPreviewTableInitialData(): Promise<string | undefined> {
+    return this.jsonDataService.data({
+      method: "OutputPreviewTableInitialDataRpcSupplier.getInitialData",
+    });
+  }
+
   registerEventHandler(type: string, handler: (args: any) => void) {
     this.eventPoller.registerEventHandler(type, handler);
   }
