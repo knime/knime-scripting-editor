@@ -9,7 +9,7 @@ export type PortConfig = {
   /**
    * null if no node is connected to an input port
    */
-  nodeId: string | null;
+  nodeId?: string;
   portIdx: number;
   portViewConfigs: PortViewConfig[];
   portName: string;

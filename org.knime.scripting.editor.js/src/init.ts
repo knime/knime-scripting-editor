@@ -75,9 +75,8 @@ export const init = async () => {
   // Check UI API availability using the first input port
   let isUiApiAvailable = false;
   const inputPorts =
-    initialData.inputPortConfigs?.inputPorts?.filter(
-      (port) => port.nodeId !== null,
-    ) || [];
+    initialData.inputPortConfigs?.inputPorts?.filter((port) => port.nodeId) ||
+    [];
 
   if (inputPorts.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

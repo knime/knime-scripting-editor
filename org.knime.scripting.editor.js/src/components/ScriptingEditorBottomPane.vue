@@ -42,7 +42,7 @@ const makeGrabFocusFunction = (tabValue: string) => {
 const portConfigs: PortConfigs = getServiceCapabilities().isUiApiAvailable
   ? {
       inputPorts: getInitialData().inputPortConfigs.inputPorts.filter(
-        (port) => port.nodeId !== null,
+        (port) => port.nodeId,
       ),
     }
   : { inputPorts: [] };
