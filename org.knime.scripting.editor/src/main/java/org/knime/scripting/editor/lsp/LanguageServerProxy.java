@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.knime.core.node.NodeLogger;
+import org.knime.scripting.editor.ScriptingService.LanguageServerProxyInterface;
 
 /**
  * A {@link LanguageServerProxy} implements the basic messaging for the language server protocol (LSP). Messages from a
@@ -72,7 +73,7 @@ import org.knime.core.node.NodeLogger;
  * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/">
  *      https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/</a>
  */
-public final class LanguageServerProxy implements AutoCloseable {
+public final class LanguageServerProxy implements LanguageServerProxyInterface {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(LanguageServerProxy.class);
 
@@ -118,6 +119,7 @@ public final class LanguageServerProxy implements AutoCloseable {
      *
      * @param message the JSON-RPC message
      */
+    @Override
     public synchronized void sendMessage(final String message) {
         // Send the message
         LOGGER.debug("LSP message - client: '" + message + "'");
@@ -139,6 +141,7 @@ public final class LanguageServerProxy implements AutoCloseable {
      *
      * @param messageListener a listener which consumes JSON-RPC messages from the language server
      */
+    @Override
     public void setMessageListener(final Consumer<String> messageListener) {
         m_messageListener = messageListener;
     }

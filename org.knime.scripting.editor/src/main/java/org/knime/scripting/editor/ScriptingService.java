@@ -61,6 +61,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -70,7 +71,6 @@ import org.knime.core.node.workflow.NodeContext;
 import org.knime.core.node.workflow.VariableType;
 import org.knime.gateway.api.webui.entity.KaiUsageEnt;
 import org.knime.gateway.impl.webui.kai.CodeKaiHandler;
-import org.knime.scripting.editor.lsp.LanguageServerProxy;
 
 /**
  * A base scripting service that provides an JSON-RPC endpoint for a scripting dialog with {@link #getJsonRpcService()}.
@@ -97,7 +97,7 @@ public abstract class ScriptingService {
      */
     protected final Predicate<VariableType<?>> m_flowVariableFilter;
 
-    private Optional<LanguageServerProxy> m_languageServer;
+    private Optional<LanguageServerProxyInterface> m_languageServer;
 
     // is shutdown onDeactivate
     private ExecutorService m_executorService;
@@ -203,7 +203,7 @@ public abstract class ScriptingService {
      * Deactivate the service. This stops the language server and clears the event queue.
      */
     public void onDeactivate() {
-        m_languageServer.ifPresent(LanguageServerProxy::close);
+        m_languageServer.ifPresent(LanguageServerProxyInterface::close);
         m_languageServer = Optional.empty();
         m_eventQueue.clear();
         if (m_executorService != null) {
@@ -499,6 +499,26 @@ public abstract class ScriptingService {
          * @return a proxy object which can communicate with the server
          * @throws IOException if an I/O error occurs starting the process
          */
-        LanguageServerProxy start() throws IOException;
+        LanguageServerProxyInterface start() throws IOException;
+    }
+
+    // TODO make this real and build a useful abstraction hierarchy around it
+    public interface LanguageServerProxyInterface extends AutoCloseable {
+        /**
+         * Send the given message to the language server. Do nothing if no language server is available.
+         *
+         * @param message the JSON-RPC message for the language server
+         */
+        void sendMessage(String message);
+
+        /**
+         * Set a listener that will be called for each message received from the language server.
+         *
+         * @param listener the listener that will be called for each message received from the language server
+         */
+        void setMessageListener(Consumer<String> listener);
+
+        @Override
+        public void close();
     }
 }
