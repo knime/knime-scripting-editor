@@ -5,6 +5,7 @@ import { DEFAULT_INITIAL_DATA, DEFAULT_INITIAL_SETTINGS } from "./mock-data";
 
 // Always use mocks in demo mode
 const scriptingService = createScriptingServiceMock({
+  simulateUnlicensedUser: false,
   sendToServiceMockResponses: {
     getLanguageServerConfig: () => Promise.resolve(JSON.stringify({})),
     runScript: () => {

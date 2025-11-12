@@ -23,6 +23,7 @@ export type ScriptingServiceMockOptions = {
     string,
     (...options: any) => Promise<any>
   >;
+  simulateUnlicensedUser?: boolean;
 };
 
 export const createScriptingServiceMock = (
@@ -123,6 +124,14 @@ export const createScriptingServiceMock = (
 
     getAiUsage() {
       log("Called scriptingService.getAiUsage");
+      // Simulate unlicensed user (e.g., consumer without team license)
+      if (opt.simulateUnlicensedUser) {
+        return Promise.reject(
+          new Error(
+            "403:You need a KNIME Hub team license to use AI features. Please contact your team administrator or upgrade your plan.",
+          ),
+        );
+      }
       return Promise.resolve({
         limit: 500,
         used: aiUsage,
